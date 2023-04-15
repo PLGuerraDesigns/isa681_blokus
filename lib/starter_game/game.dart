@@ -4,10 +4,11 @@ import 'package:flame/game.dart';
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/image_composition.dart' as flame_image;
-import 'package:blokus/game/bullet.dart';
-import 'package:blokus/game/player.dart';
+import 'package:blokus/starter_game/bullet.dart';
+import 'package:blokus/starter_game/player.dart';
 import 'package:flutter/material.dart';
 
+// TODO: REMOVE THIS FILE
 class MyGame extends FlameGame with PanDetector, HasCollisionDetection {
   MyGame({
     required this.onGameOver,

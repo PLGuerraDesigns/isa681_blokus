@@ -1,5 +1,6 @@
+import 'package:blokus/models/game.dart';
 import 'package:flame/game.dart';
-import 'package:blokus/game/game.dart';
+import 'package:blokus/starter_game/game.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
@@ -23,8 +24,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return const MaterialApp(
       title: 'Blokus',
-      debugShowCheckedModeBanner: false,
       home: GamePage(),
+      // home: BlokusGame(),
     );
   }
 }

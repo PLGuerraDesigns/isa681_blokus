@@ -2,9 +2,10 @@ import 'dart:async';
 
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
-import 'package:blokus/game/bullet.dart';
+import 'package:blokus/starter_game/bullet.dart';
 import 'package:flutter/material.dart';
 
+// TODO: REMOVE THIS FILE
 class Player extends PositionComponent with HasGameRef, CollisionCallbacks {
   Vector2 velocity = Vector2.zero();
 
