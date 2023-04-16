@@ -12,15 +12,24 @@ class PieceBank extends StatelessWidget {
 
   List<Widget> gamePieces() {
     final List<Widget> gamePieces = [];
+    Piece gamePiece;
 
-    for (var gamePiece in PieceShape.values) {
+    for (var pieceShape in PieceShape.values) {
+      gamePiece = Piece(
+        color: pieceColor,
+        shape: pieceShape,
+      );
       gamePieces.add(
-        FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Pieces(
-              pieceColor: pieceColor,
-              pieceShape: gamePiece,
-            )),
+        Draggable(
+          data: gamePiece,
+          feedback: Piece(
+            color: pieceColor.withOpacity(0.75),
+            shape: pieceShape,
+            selected: true,
+          ),
+          childWhenDragging: Container(),
+          child: gamePiece,
+        ),
       );
     }
     return gamePieces;

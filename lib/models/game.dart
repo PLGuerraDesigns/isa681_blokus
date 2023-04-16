@@ -12,7 +12,7 @@ class BlokusGame extends StatefulWidget {
 class BlokusGameState extends State<BlokusGame> {
   List<PieceBank> player1Bank = const [
     PieceBank(pieceColor: Colors.blue),
-    PieceBank(pieceColor: Colors.yellow)
+    PieceBank(pieceColor: Colors.amber)
   ];
 
   List<PieceBank> player2Bank = const [
