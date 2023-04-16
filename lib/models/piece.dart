@@ -1,54 +1,43 @@
 import 'package:blokus/constants/custom_enums.dart';
+import 'package:blokus/models/cell.dart';
 import 'package:flutter/material.dart';
 
-class Pieces extends StatelessWidget {
-  final Color pieceColor;
-  final PieceShape pieceShape;
+class Piece extends StatelessWidget {
+  final Color color;
+  final PieceShape shape;
+  final bool? selected;
 
-  const Pieces({super.key, required this.pieceColor, required this.pieceShape});
+  const Piece(
+      {super.key, required this.color, required this.shape, this.selected});
 
   @override
   Widget build(BuildContext context) {
-    return Draggable(
-      feedback: gamePiece(pieceColor),
-      childWhenDragging: gamePiece(pieceColor.withOpacity(0.25)),
-      child: gamePiece(pieceColor),
-    );
+    return FittedBox(
+        fit: BoxFit.scaleDown,
+        child: SizedBox(
+            width: selected == true ? 125 : 100,
+            height: selected == true ? 125 : 100,
+            child: gamePiece()));
   }
 
-  Widget gamePiece(Color color) {
-    // TODO: GENERATE USING GRID OF CELLS
-    switch (pieceShape) {
-      case PieceShape.doubleSquare:
-        return Container(
-          width: 40,
-          height: 80,
-          color: color,
-        );
-      case PieceShape.tripleSquare:
-        return Container(
-          width: 40,
-          height: 120,
-          color: color,
-        );
-      case PieceShape.quadSquare:
-        return Container(
-          width: 80,
-          height: 80,
-          color: color,
-        );
-      case PieceShape.quintSquare:
-        return Container(
-          width: 40,
-          height: 40,
-          color: color,
-        );
-      default:
-        return Container(
-          width: 40,
-          height: 40,
-          color: color,
-        );
+  Widget gamePiece() {
+    List<Cell> piece = [];
+    int maxRowLength = 3;
+    for (List<int> row in shape.indexRepresentation) {
+      if (row.length > maxRowLength) {
+        maxRowLength = row.length;
+      }
+      for (int index in row) {
+        piece.add(Cell(color: index == 1 ? color : Colors.transparent));
+      }
     }
+
+    return GridView.custom(
+      physics: const NeverScrollableScrollPhysics(),
+      scrollDirection: Axis.horizontal,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: maxRowLength),
+      childrenDelegate: SliverChildListDelegate(piece),
+    );
   }
 }

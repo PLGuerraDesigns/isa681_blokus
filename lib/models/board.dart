@@ -19,7 +19,11 @@ class BoardState extends State<Board> {
         child: GridView.count(
           padding: const EdgeInsets.all(1),
           crossAxisCount: 20,
-          children: List.generate(400, (index) => const Cell()),
+          children: List.generate(
+              400,
+              (index) => const Cell(
+                    boardCell: true,
+                  )),
         ),
       ),
     );

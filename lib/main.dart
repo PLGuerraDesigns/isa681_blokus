@@ -24,8 +24,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return const MaterialApp(
       title: 'Blokus',
-      home: GamePage(),
-      // home: BlokusGame(),
+      // home: GamePage(),
+      home: BlokusGame(),
     );
   }
 }
