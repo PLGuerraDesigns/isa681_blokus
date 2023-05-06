@@ -1,3 +1,4 @@
+import 'package:blokus/constants/custom_enums.dart';
 import 'package:blokus/models/piece.dart';
 import 'package:flutter/material.dart';
 
@@ -47,6 +48,7 @@ class CellState extends State<Cell> {
           }
         },
         onAccept: (Piece data) {
+          print(data.shape.indexRepresentation);
           if (!occupied) {
             setState(() {
               cellColor = data.color;
