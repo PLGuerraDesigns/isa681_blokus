@@ -2,11 +2,11 @@ class PieceIndexRepresentation {
   PieceIndexRepresentation._();
 
   static const List<List<int>> i1 = [
-    [1],
+    [1, 0, 0],
   ];
 
   static const List<List<int>> i2 = [
-    [1, 1],
+    [1, 1, 0],
   ];
 
   static const List<List<int>> i3 = [
@@ -37,14 +37,13 @@ class PieceIndexRepresentation {
   ];
 
   static const List<List<int>> v3 = [
-    [1, 1],
-    [0, 1],
+    [1, 1, 0],
+    [1, 0, 0],
   ];
 
   static const List<List<int>> u = [
-    [1, 1],
-    [1, 1],
-    [0, 1],
+    [1, 1, 1],
+    [1, 0, 1],
   ];
 
   static const List<List<int>> v5 = [
