@@ -1,13 +1,12 @@
 import "package:blokus/models/piece.dart";
 import "package:blokus/models/player.dart";
-import "package:blokus/widgets/player_avatar.dart";
 import "package:blokus/widgets/player_banner.dart";
 import "package:flutter/material.dart";
 
 import 'piece_view.dart';
 
-class PlayerPieceBank extends StatelessWidget {
-  const PlayerPieceBank({
+class PieceCollectionView extends StatelessWidget {
+  const PieceCollectionView({
     super.key,
     required this.player,
   });
@@ -40,8 +39,6 @@ class PlayerPieceBank extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Color color =
-        player.pieces.isEmpty ? Colors.grey[400] : player.pieces.first.color;
     return Expanded(
       child: Column(
         mainAxisSize: MainAxisSize.max,
@@ -49,14 +46,25 @@ class PlayerPieceBank extends StatelessWidget {
         children: [
           PlayerBanner(
             player: player,
-            color: color,
           ),
-          const SizedBox(height: 4),
           Expanded(
             child: Container(
               decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(width: 2, color: color)),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  width: 2,
+                  color: player.primaryColor,
+                ),
+                gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      player.primaryColor.withOpacity(0.1),
+                      player.hasSecondaryCollection
+                          ? player.secondaryColor.withOpacity(0.1)
+                          : player.primaryColor.withOpacity(0.1)
+                    ]),
+              ),
               child: GridView.custom(
                 padding: const EdgeInsets.all(20),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:blokus/constants/custom_enums.dart';
 import 'package:blokus/models/board.dart';
@@ -20,6 +21,7 @@ class BlokusGame extends FlameGame with ChangeNotifier {
   final void Function(
     List<dynamic> remainingPieces,
     String boardConfiguration,
+    String playerData,
   ) onGameStateUpdate;
 
   final Board _board = Board(numberOfColumns: 20);
@@ -28,13 +30,13 @@ class BlokusGame extends FlameGame with ChangeNotifier {
 
   final Player _player = Player(isOpponent: false);
 
-  Player _opponent = Player(isOpponent: true);
+  List<Player> _opponents = [Player(isOpponent: true)];
 
-  get player => _player;
+  Player get player => _player;
 
-  get opponent => _opponent;
+  List<Player> get opponents => _opponents;
 
-  get board => _board;
+  Board get board => _board;
 
   @override
   Color backgroundColor() {
@@ -43,13 +45,6 @@ class BlokusGame extends FlameGame with ChangeNotifier {
 
   @override
   Future<void>? onLoad() async {
-    // _player.setPieces(PieceShape.values.map((e) {
-    //   return Piece(color: Colors.green, shape: e);
-    // }).toList());
-    // _opponent.setPieces(PieceShape.values.map((e) {
-    //   return Piece(color: Colors.amber, shape: e);
-    // }).toList());
-
     await super.onLoad();
   }
 
@@ -61,38 +56,40 @@ class BlokusGame extends FlameGame with ChangeNotifier {
     }
 
     onGameStateUpdate(
-        _player.pieces.map((Piece piece) => piece.shape.name).toList(),
-        _board.configuration);
+        _player.pieces.map((Piece piece) => piece.data()).toList(),
+        _board.configuration,
+        json.encode(_player.data()));
 
-    if (_player.pieces.isEmpty || _opponent.pieces.isEmpty) {
+    if (_player.pieces.isEmpty ||
+        _opponents.where((opponent) => opponent.pieces.isEmpty).isNotEmpty) {
       endGame(false);
     }
   }
 
   void startNewGame(List<Player> opponents) {
     isGameOver = false;
-    _opponent = opponents.first;
+    _opponents = opponents;
 
     _board.resetBoard();
-
-    _player.setPieces(PieceShape.values.map((e) {
-      return Piece(
-          color: _player.colors.first, shape: e, playerUID: _player.uid);
-    }).toList());
-    _opponent.setPieces(PieceShape.values.map((e) {
-      return Piece(
-          color: _opponent.colors.first, shape: e, playerUID: _opponent.uid);
-    }).toList());
+    _player.initializePieces();
+    for (Player opponent in opponents) {
+      opponent.initializePieces();
+    }
   }
 
-  void updateOpponentPieceList({required List<dynamic> opponentPieces}) {
-    _opponent.setPieces(opponentPieces
-        .map((piecesAsString) => Piece(
-            playerUID: _opponent.uid,
-            color: _opponent.colors.first,
-            shape: PieceShape.values
-                .where((piece) => piece.name == piecesAsString)
-                .first))
+  void updateOpponentPieceList(
+      {required String opponentID, required List<dynamic> opponentPieces}) {
+    Player opponent =
+        opponents.where((opponent) => opponent.uid == opponentID).first;
+    opponent.setPieces(opponentPieces
+        .map((piecesAsJson) => Piece(
+              playerUID: piecesAsJson['playerUID'],
+              color: Color(int.parse(piecesAsJson['color'])),
+              shape: PieceShape.values
+                  .where((piece) => piece.name == piecesAsJson['shape'])
+                  .first,
+              isSecondarySet: piecesAsJson['isSecondarySet'],
+            ))
         .toList());
   }
 
@@ -104,8 +101,6 @@ class BlokusGame extends FlameGame with ChangeNotifier {
     if (_board.validPiecePlacement(targetCellID: id, piece: piece)) {
       _board.addPiece(targetCellID: id, piece: piece);
       _player.removePlayerPiece(piece);
-      // onGameStateUpdate(_player.pieces.map((e) => e.shape.name).toList());
-      notifyListeners();
     }
   }
 
