@@ -1,40 +1,39 @@
 import 'dart:async';
-
-import 'package:blokus/constants/custom_enums.dart';
+import 'dart:convert';
 import 'package:blokus/models/board.dart';
 import 'package:blokus/models/piece.dart';
 import 'package:blokus/models/player.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class BlokusGame extends FlameGame with ChangeNotifier {
   BlokusGame({
-    required this.onGameOver,
-    required this.onGameStateUpdate,
+    required this.onGameOverCallback,
+    required this.supabase,
   });
 
-  /// Callback to notify the parent when the game ends.
-  final void Function(bool didWin) onGameOver;
+  final SupabaseClient supabase;
 
-  /// Callback for when the game state updates.
-  final void Function(
-    List<dynamic> remainingPieces,
-    String boardConfiguration,
-  ) onGameStateUpdate;
+  /// Callback to notify the parent when the game ends.
+  final void Function(bool didWin) onGameOverCallback;
 
   final Board _board = Board(numberOfColumns: 20);
+
+  /// Holds the RealtimeChannel to sync game states
+  RealtimeChannel? realtimeChannel;
 
   bool isGameOver = true;
 
   final Player _player = Player(isOpponent: false);
 
-  Player _opponent = Player(isOpponent: true);
+  List<Player> _opponents = [Player(isOpponent: true)];
 
-  get player => _player;
+  Player get player => _player;
 
-  get opponent => _opponent;
+  List<Player> get opponents => _opponents;
 
-  get board => _board;
+  Board get board => _board;
 
   @override
   Color backgroundColor() {
@@ -43,75 +42,100 @@ class BlokusGame extends FlameGame with ChangeNotifier {
 
   @override
   Future<void>? onLoad() async {
-    // _player.setPieces(PieceShape.values.map((e) {
-    //   return Piece(color: Colors.green, shape: e);
-    // }).toList());
-    // _opponent.setPieces(PieceShape.values.map((e) {
-    //   return Piece(color: Colors.amber, shape: e);
-    // }).toList());
-
     await super.onLoad();
   }
 
   @override
-  void update(double dt) {
+  void update(double dt) async {
     super.update(dt);
     if (isGameOver) {
       return;
     }
 
-    onGameStateUpdate(
-        _player.pieces.map((Piece piece) => piece.shape.name).toList(),
-        _board.configuration);
+    ChannelResponse response;
 
-    if (_player.pieces.isEmpty || _opponent.pieces.isEmpty) {
+    do {
+      response = await realtimeChannel!.send(
+        type: RealtimeListenTypes.broadcast,
+        event: 'game_state',
+        payload: {
+          'boardConfiguration': _board.configuration,
+          'playerData': json.encode(_player.data()),
+        },
+      );
+      await Future.delayed(Duration.zero);
+      notifyListeners();
+    } while (response == ChannelResponse.rateLimited);
+
+    if (_player.pieces.isEmpty ||
+        _opponents.where((opponent) => opponent.pieces.isEmpty).isNotEmpty) {
       endGame(false);
     }
   }
 
-  void startNewGame(List<Player> opponents) {
+  void onGameStarted(roomID, opponents) async {
+    // await a frame to allow subscribing to a new channel in a realtime callback
+    await Future.delayed(Duration.zero);
+
+    startNewGame(opponents);
+
+    notifyListeners();
+
+    realtimeChannel =
+        supabase.channel(roomID, opts: const RealtimeChannelConfig(ack: true));
+
+    realtimeChannel!
+        .on(RealtimeListenTypes.broadcast, ChannelFilter(event: 'game_state'),
+            (payload, [_]) {
+      _board.setUpBoard(payload['boardConfiguration']);
+      updateOpponent(payload['playerData']);
+
+      // if (player.pieces.isEmpty ||
+      //     opponents.where((opponent) => opponent.pieces.isEmpty).isNotEmpty) {
+      //   if (!isGameOver) {
+      //     isGameOver = true;
+      //     onGameOver(true);
+      //   }
+      // }
+    }).subscribe();
+  }
+
+  void returnToLobbyCallback(BuildContext context) async {
+    Navigator.of(context).pop();
+    await supabase.removeChannel(realtimeChannel!);
+  }
+
+  void startNewGame(List<Player> newOpponents) {
     isGameOver = false;
-    _opponent = opponents.first;
+    _opponents = newOpponents;
 
     _board.resetBoard();
-
-    _player.setPieces(PieceShape.values.map((e) {
-      return Piece(
-          color: _player.colors.first, shape: e, playerUID: _player.uid);
-    }).toList());
-    _opponent.setPieces(PieceShape.values.map((e) {
-      return Piece(
-          color: _opponent.colors.first, shape: e, playerUID: _opponent.uid);
-    }).toList());
+    _player.initializePieces();
+    for (Player opponent in _opponents) {
+      opponent.initializePieces();
+    }
   }
 
-  void updateOpponentPieceList({required List<dynamic> opponentPieces}) {
-    _opponent.setPieces(opponentPieces
-        .map((piecesAsString) => Piece(
-            playerUID: _opponent.uid,
-            color: _opponent.colors.first,
-            shape: PieceShape.values
-                .where((piece) => piece.name == piecesAsString)
-                .first))
-        .toList());
-  }
-
-  void updateBoard(String boardConfiguration) {
-    _board.setUpBoard(boardConfiguration);
+  void updateOpponent(String opponentPayload) {
+    Map<dynamic, dynamic> playerData = jsonDecode(opponentPayload);
+    if (opponents.map((opponent) => opponent.uid).contains(playerData['uid'])) {
+      Player opponent = opponents
+          .where((opponent) => opponent.uid == playerData['uid'])
+          .first;
+      opponent.setData(playerData);
+    }
   }
 
   void addPieceToBoard(int id, Piece piece) {
     if (_board.validPiecePlacement(targetCellID: id, piece: piece)) {
       _board.addPiece(targetCellID: id, piece: piece);
       _player.removePlayerPiece(piece);
-      // onGameStateUpdate(_player.pieces.map((e) => e.shape.name).toList());
-      notifyListeners();
     }
   }
 
   /// Called when either the player or the opponent has run out of health points
   void endGame(bool playerWon) {
     isGameOver = true;
-    onGameOver(playerWon);
+    onGameOverCallback(playerWon);
   }
 }
