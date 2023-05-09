@@ -38,22 +38,21 @@ class LobbyDialogState extends State<LobbyDialog> {
 
     _lobby.realtimeChannel
         .on(
-      RealtimeListenTypes.presence,
-      ChannelFilter(event: 'sync'),
-      (payload, [ref]) => setState(() {
-        _lobby.roomSyncCallback(payload, ref);
-      }),
-    )
-        .on(RealtimeListenTypes.broadcast, ChannelFilter(event: 'game_start'),
-            (payload, [ref]) {
-      bool gameStarted =
-          _lobby.gameStartedCallback(payload, ref, widget.onGameStarted);
-      if (gameStarted) {
-        Navigator.of(context).pop();
-      }
-    }).subscribe(
-      (status, [ref]) => _lobby.subscribeCallback(status, ref),
-    );
+          RealtimeListenTypes.presence,
+          ChannelFilter(event: 'sync'),
+          (payload, [ref]) => setState(() {
+            _lobby.roomSyncCallback(payload, ref);
+          }),
+        )
+        .on(
+          RealtimeListenTypes.broadcast,
+          ChannelFilter(event: 'game_start'),
+          (payload, [ref]) => _lobby.gameStartedCallback(
+              context, payload, ref, widget.onGameStarted),
+        )
+        .subscribe(
+          (status, [ref]) => _lobby.subscribeCallback(status, ref),
+        );
   }
 
   @override

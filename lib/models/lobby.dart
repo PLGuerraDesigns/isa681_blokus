@@ -97,6 +97,9 @@ class Lobby {
 
     _assignPlayerColors(roomToLaunch);
 
+    // print(roomToLaunch.players.map((player) =>
+    // '${player.username}: (${player.primaryColor.value}, ${player.secondaryColor.value}) (hasSecondaryCollection: ${player.hasSecondaryCollection})'));
+
     await realtimeChannel.send(
       type: RealtimeListenTypes.broadcast,
       event: 'game_start',
@@ -109,80 +112,68 @@ class Lobby {
   }
 
   void _assignPlayerColors(Room roomToLaunch) {
-    int playerIndex = 0;
-    bool allPrimariesAssigned = true;
-    for (Color color in [
-      Colors.blue,
-      Colors.red,
-      Colors.green,
-      Colors.amber[600]!
-    ]) {
-      playerIndex = Random().nextInt(roomToLaunch.players.length);
+    int colorIndex = 0;
+    int playerIndex = Random().nextInt(roomToLaunch.players.length);
+    List<Color> colors = [
+      Colors.blue, // 4280391411
+      Colors.red, // 4294198070
+      Colors.green, // 4283215696
+      Colors.amber[600]! // 4294947584
+    ];
 
-      // Assign single color to random user if grey
-      if (roomToLaunch.players[playerIndex].primaryColor == Colors.grey) {
-        roomToLaunch.players[playerIndex]
-            .updatePrimaryColor(color.value.toString());
-        continue;
-      }
+    for (Player player in roomToLaunch.players) {
+      colorIndex = Random().nextInt(colors.length);
+      player.updatePrimaryColor(colors[colorIndex].value);
+      colors.remove(colors[colorIndex]);
+    }
 
-      // If user already has a non-grey primary color assigned,
-      // check if all users have a primary color
-      for (Player player in roomToLaunch.players) {
-        if (player.primaryColor == Colors.grey) {
-          allPrimariesAssigned = false;
-        }
+    while (colors.isNotEmpty) {
+      while (roomToLaunch.players[playerIndex].hasSecondaryCollection) {
+        playerIndex = Random().nextInt(roomToLaunch.players.length);
       }
-
-      // All users have primary colors, so assign as secondary if none assigned
-      if (allPrimariesAssigned) {
-        while (
-            roomToLaunch.players[playerIndex].secondaryColor != Colors.grey) {
-          playerIndex = Random().nextInt(roomToLaunch.players.length);
-        }
-        roomToLaunch.players[playerIndex]
-            .updateSecondaryColor(color.value.toString());
-        roomToLaunch.players[playerIndex].hasSecondaryCollection = true;
-      }
+      colorIndex = Random().nextInt(colors.length);
+      roomToLaunch.players[playerIndex]
+          .updateSecondaryColor(colors[colorIndex].value);
+      colors.remove(colors[colorIndex]);
     }
   }
 
   // Start the game if someone has started a game with you
-  bool gameStartedCallback(
-      dynamic payload, dynamic ref, Function onGameStarted) {
+  void gameStartedCallback(BuildContext context, dynamic payload, dynamic ref,
+      Function onGameStarted) {
     final participants = List<dynamic>.from(payload['participants']);
 
+    // Ensure we belong to the started room
     if (participants
         .map((participant) => participant['uid'])
         .contains(player.uid)) {
+      var playerData = participants
+          .where((participant) => participant['uid'] == player.uid)
+          .first;
+
       // Update player colors
-      player.updatePrimaryColor(participants
-          .where((participant) => participant['uid'] == player.uid)
-          .first['primaryColorValue']
-          .toString());
+      player.updatePrimaryColor(int.parse(playerData['primaryColorValue']));
+      player.updateSecondaryColor(int.parse(playerData['secondaryColorValue']));
 
-      player.hasSecondaryCollection = participants
-          .where((participant) => participant['uid'] == player.uid)
-          .first['hasSecondaryCollection'];
-      if (player.hasSecondaryCollection) {
-        player.updateSecondaryColor(participants
-            .where((participant) => participant['uid'] == player.uid)
-            .first['secondaryColorValue']
-            .toString());
-      }
-
-      final opponents = rooms
+      List<Player> opponents = rooms
           .where((room) => room.id == selectedRoomID)
           .first
           .players
           .where((element) => element.uid != player.uid)
           .toList();
 
+      for (Player opponent in opponents) {
+        var opponentData = participants
+            .where((participant) => participant['uid'] == opponent.uid)
+            .first;
+
+        opponent.setData(opponentData);
+      }
+
       final roomID = payload['room_id'] as String;
       onGameStarted(roomID, opponents);
-      return true;
+      Navigator.of(context).pop();
     }
-    return false;
   }
 
   void sendSyncData() async {

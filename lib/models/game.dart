@@ -1,30 +1,27 @@
 import 'dart:async';
 import 'dart:convert';
-
-import 'package:blokus/constants/custom_enums.dart';
 import 'package:blokus/models/board.dart';
 import 'package:blokus/models/piece.dart';
 import 'package:blokus/models/player.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class BlokusGame extends FlameGame with ChangeNotifier {
   BlokusGame({
-    required this.onGameOver,
-    required this.onGameStateUpdate,
+    required this.onGameOverCallback,
+    required this.supabase,
   });
 
-  /// Callback to notify the parent when the game ends.
-  final void Function(bool didWin) onGameOver;
+  final SupabaseClient supabase;
 
-  /// Callback for when the game state updates.
-  final void Function(
-    List<dynamic> remainingPieces,
-    String boardConfiguration,
-    String playerData,
-  ) onGameStateUpdate;
+  /// Callback to notify the parent when the game ends.
+  final void Function(bool didWin) onGameOverCallback;
 
   final Board _board = Board(numberOfColumns: 20);
+
+  /// Holds the RealtimeChannel to sync game states
+  RealtimeChannel? realtimeChannel;
 
   bool isGameOver = true;
 
@@ -49,16 +46,26 @@ class BlokusGame extends FlameGame with ChangeNotifier {
   }
 
   @override
-  void update(double dt) {
+  void update(double dt) async {
     super.update(dt);
     if (isGameOver) {
       return;
     }
 
-    onGameStateUpdate(
-        _player.pieces.map((Piece piece) => piece.data()).toList(),
-        _board.configuration,
-        json.encode(_player.data()));
+    ChannelResponse response;
+
+    do {
+      response = await realtimeChannel!.send(
+        type: RealtimeListenTypes.broadcast,
+        event: 'game_state',
+        payload: {
+          'boardConfiguration': _board.configuration,
+          'playerData': json.encode(_player.data()),
+        },
+      );
+      await Future.delayed(Duration.zero);
+      notifyListeners();
+    } while (response == ChannelResponse.rateLimited);
 
     if (_player.pieces.isEmpty ||
         _opponents.where((opponent) => opponent.pieces.isEmpty).isNotEmpty) {
@@ -66,35 +73,57 @@ class BlokusGame extends FlameGame with ChangeNotifier {
     }
   }
 
-  void startNewGame(List<Player> opponents) {
+  void onGameStarted(roomID, opponents) async {
+    // await a frame to allow subscribing to a new channel in a realtime callback
+    await Future.delayed(Duration.zero);
+
+    startNewGame(opponents);
+
+    notifyListeners();
+
+    realtimeChannel =
+        supabase.channel(roomID, opts: const RealtimeChannelConfig(ack: true));
+
+    realtimeChannel!
+        .on(RealtimeListenTypes.broadcast, ChannelFilter(event: 'game_state'),
+            (payload, [_]) {
+      _board.setUpBoard(payload['boardConfiguration']);
+      updateOpponent(payload['playerData']);
+
+      // if (player.pieces.isEmpty ||
+      //     opponents.where((opponent) => opponent.pieces.isEmpty).isNotEmpty) {
+      //   if (!isGameOver) {
+      //     isGameOver = true;
+      //     onGameOver(true);
+      //   }
+      // }
+    }).subscribe();
+  }
+
+  void returnToLobbyCallback(BuildContext context) async {
+    Navigator.of(context).pop();
+    await supabase.removeChannel(realtimeChannel!);
+  }
+
+  void startNewGame(List<Player> newOpponents) {
     isGameOver = false;
-    _opponents = opponents;
+    _opponents = newOpponents;
 
     _board.resetBoard();
     _player.initializePieces();
-    for (Player opponent in opponents) {
+    for (Player opponent in _opponents) {
       opponent.initializePieces();
     }
   }
 
-  void updateOpponentPieceList(
-      {required String opponentID, required List<dynamic> opponentPieces}) {
-    Player opponent =
-        opponents.where((opponent) => opponent.uid == opponentID).first;
-    opponent.setPieces(opponentPieces
-        .map((piecesAsJson) => Piece(
-              playerUID: piecesAsJson['playerUID'],
-              color: Color(int.parse(piecesAsJson['color'])),
-              shape: PieceShape.values
-                  .where((piece) => piece.name == piecesAsJson['shape'])
-                  .first,
-              isSecondarySet: piecesAsJson['isSecondarySet'],
-            ))
-        .toList());
-  }
-
-  void updateBoard(String boardConfiguration) {
-    _board.setUpBoard(boardConfiguration);
+  void updateOpponent(String opponentPayload) {
+    Map<dynamic, dynamic> playerData = jsonDecode(opponentPayload);
+    if (opponents.map((opponent) => opponent.uid).contains(playerData['uid'])) {
+      Player opponent = opponents
+          .where((opponent) => opponent.uid == playerData['uid'])
+          .first;
+      opponent.setData(playerData);
+    }
   }
 
   void addPieceToBoard(int id, Piece piece) {
@@ -107,6 +136,6 @@ class BlokusGame extends FlameGame with ChangeNotifier {
   /// Called when either the player or the opponent has run out of health points
   void endGame(bool playerWon) {
     isGameOver = true;
-    onGameOver(playerWon);
+    onGameOverCallback(playerWon);
   }
 }
