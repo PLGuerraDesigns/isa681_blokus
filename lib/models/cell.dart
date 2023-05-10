@@ -48,7 +48,6 @@ class CellState extends State<Cell> {
           }
         },
         onAccept: (Piece data) {
-          print(data.shape.indexRepresentation);
           if (!occupied) {
             setState(() {
               cellColor = data.color;
