@@ -15,11 +15,16 @@ class PieceView extends StatelessWidget {
       message: piece.shape.name,
       waitDuration: const Duration(milliseconds: 500),
       child: FittedBox(
-          fit: BoxFit.scaleDown,
-          child: SizedBox(
-              width: selected == true ? 125 : 100,
-              height: selected == true ? 125 : 100,
-              child: gamePiece())),
+        fit: BoxFit.scaleDown,
+        child: SizedBox(
+          width: selected == true ? 125 : 100,
+          height: selected == true ? 125 : 100,
+          child: RotatedBox(
+            quarterTurns: piece.quarterTurns,
+            child: gamePiece(),
+          ),
+        ),
+      ),
     );
   }
 
@@ -35,7 +40,7 @@ class PieceView extends StatelessWidget {
           CellView(
             color: index == 1
                 ? selected == true
-                    ? piece.color.withOpacity(0.75)
+                    ? piece.color.withOpacity(0.5)
                     : piece.color
                 : Colors.transparent,
           ),
@@ -47,7 +52,8 @@ class PieceView extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       scrollDirection: Axis.horizontal,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: maxColumnLength),
+        crossAxisCount: maxColumnLength,
+      ),
       childrenDelegate: SliverChildListDelegate(cellViewGroup),
     );
   }

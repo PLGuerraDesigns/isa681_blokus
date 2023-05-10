@@ -65,14 +65,39 @@ class PieceCollectionView extends StatelessWidget {
                           : player.primaryColor.withOpacity(0.1)
                     ]),
               ),
-              child: GridView.custom(
-                padding: const EdgeInsets.all(20),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  mainAxisSpacing: 20,
-                  crossAxisSpacing: 20,
-                  crossAxisCount: 3,
-                ),
-                childrenDelegate: SliverChildListDelegate(gamePieces()),
+              child: Stack(
+                alignment: Alignment.topRight,
+                children: [
+                  GridView.custom(
+                    padding: const EdgeInsets.all(20),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      mainAxisSpacing: 20,
+                      crossAxisSpacing: 20,
+                      crossAxisCount: 3,
+                    ),
+                    childrenDelegate: SliverChildListDelegate(gamePieces()),
+                  ),
+                  player.isOpponent || player.pieces.isEmpty
+                      ? Container()
+                      : Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: FloatingActionButton(
+                            tooltip: 'Rotate Pieces',
+                            elevation: 0,
+                            backgroundColor:
+                                player.primaryColor.withOpacity(0.6),
+                            hoverColor: player.primaryColor.withOpacity(1),
+                            hoverElevation: 8,
+                            mini: true,
+                            child: const RotatedBox(
+                                quarterTurns: 1,
+                                child:
+                                    Icon(Icons.rotate_90_degrees_cw_outlined)),
+                            onPressed: () => player.rotatePieces(),
+                          ),
+                        ),
+                ],
               ),
             ),
           ),

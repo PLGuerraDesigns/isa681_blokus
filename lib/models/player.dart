@@ -47,7 +47,7 @@ class Player {
     for (dynamic pieceData in playerData['remainingPieces']) {
       Piece piece = Piece(
         playerUID: pieceData['playerUID'],
-        color: Color(int.parse(pieceData['color'])),
+        color: Color(int.parse(pieceData['colorValue'])),
         shape: PieceShape.values
             .where((piece) => piece.name == pieceData['shape'])
             .first,
@@ -92,6 +92,15 @@ class Player {
           isSecondarySet: true,
         );
       }).toList());
+    }
+  }
+
+  void rotatePieces() {
+    for (Piece piece in pieces) {
+      piece.quarterTurns += 1;
+      if (piece.quarterTurns > 3) {
+        piece.quarterTurns = 0;
+      }
     }
   }
 

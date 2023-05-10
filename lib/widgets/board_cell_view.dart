@@ -44,7 +44,7 @@ class _BoardCellViewState extends State<BoardCellView> {
         );
       },
       onWillAccept: (data) {
-        if (widget.cell.isOccupied()) {
+        if (!widget.cell.isOccupied()) {
           setState(() {
             if (data.runtimeType == PieceView) {
               widget.cell.color =
@@ -56,7 +56,7 @@ class _BoardCellViewState extends State<BoardCellView> {
       },
       onLeave: (data) {
         setState(() {
-          if (widget.cell.isOccupied()) {
+          if (!widget.cell.isOccupied()) {
             widget.cell.color = Colors.grey[300]!;
           }
         });

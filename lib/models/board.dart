@@ -27,11 +27,24 @@ class Board {
   bool validPiecePlacement({required int targetCellID, required Piece piece}) {
     int index = targetCellID;
     int columnIterator = 0;
+    int initialColumnIndex = -1;
+
+    List<List<int>> pieceIndexRepresentation =
+        _getRotatedPieceIndexRepresentation(
+            piece.shape.indexRepresentation, piece.quarterTurns);
+
+    pieceIndexRepresentation.removeWhere((columns) => !columns.contains(1));
+
+    int piecePositionOffset = _piecePositionOffset(pieceIndexRepresentation);
+
     try {
-      for (List<int> columns in piece.shape.indexRepresentation) {
+      for (List<int> columns in pieceIndexRepresentation) {
+        initialColumnIndex = index ~/ 20;
         for (int value in columns) {
           if (value == 1) {
-            if (!_boardCells[index].isOccupied()) {
+            // Ensure the cells are occupied or the piece doesn't wrap around
+            if (_boardCells[index + piecePositionOffset].isOccupied() ||
+                (index ~/ 20 != initialColumnIndex)) {
               return false;
             }
           }
@@ -46,46 +59,102 @@ class Board {
     }
   }
 
+  int _piecePositionOffset(List<List<int>> pieceIndexRepresentation) {
+    int rowIterator = 0;
+    int columnOffset = 0;
+    int rowOffset = 0;
+    int columnIterator = 0;
+
+    while (pieceIndexRepresentation[columnIterator][rowIterator] == 0) {
+      columnOffset -= 20;
+      columnIterator++;
+      if (columnIterator == pieceIndexRepresentation.length) {
+        columnOffset = 0;
+        columnIterator = 0;
+        rowOffset--;
+        rowIterator++;
+      }
+    }
+
+    return columnOffset + rowOffset;
+  }
+
   void setUpBoard(String boardConfigurationString) {
-    Map<dynamic, dynamic> boardConfiguration =
+    Map<String, dynamic> boardConfiguration =
         jsonDecode(boardConfigurationString);
 
-    Piece piece;
     for (var element in boardConfiguration.entries) {
-      piece = Piece(
-          color: Color(element.value['color'] as int),
-          shape: PieceShape.values
-              .where((piece) => piece.name == element.value['piece'])
-              .first,
-          playerUID: element.value['playerID']);
+      Piece piece = Piece(
+        playerUID: element.value['playerUID'],
+        color: Color(int.parse(element.value['colorValue'])),
+        shape: PieceShape.values
+            .where((piece) => piece.name == element.value['shape'])
+            .first,
+        isSecondarySet: element.value['isSecondarySet'],
+        quarterTurns: element.value['quarterTurns'],
+      );
 
       _updateCells(targetCellID: int.parse(element.key), piece: piece);
     }
   }
 
   void addPiece({required int targetCellID, required Piece piece}) {
-    _configuration[targetCellID.toString()] = {
-      'color': piece.color.value,
-      'piece': piece.shape.name,
-      'playerID': piece.playerUID,
-    };
+    _configuration[targetCellID.toString()] = piece.data();
     _updateCells(targetCellID: targetCellID, piece: piece);
   }
 
   void _updateCells({required int targetCellID, required Piece piece}) {
     int index = targetCellID;
     int columnIterator = 0;
-    for (List<int> columns in piece.shape.indexRepresentation) {
+
+    List<List<int>> pieceIndexRepresentation =
+        _getRotatedPieceIndexRepresentation(
+            piece.shape.indexRepresentation, piece.quarterTurns);
+
+    pieceIndexRepresentation.removeWhere((columns) => !columns.contains(1));
+
+    int piecePositionOffset = _piecePositionOffset(pieceIndexRepresentation);
+
+    for (List<int> columns in pieceIndexRepresentation) {
       for (int value in columns) {
         if (value == 1) {
-          _boardCells[index] = Cell(
-              id: index, color: piece.color, occupiedPlayerID: piece.playerUID);
+          _boardCells[index + piecePositionOffset] = Cell(
+              id: index + piecePositionOffset,
+              color: piece.color,
+              occupiedPlayerID: piece.playerUID);
         }
         index++;
       }
       columnIterator += numberOfColumns;
       index = targetCellID + columnIterator;
     }
+  }
+
+  List<List<int>> _getRotatedPieceIndexRepresentation(
+      List<List<int>> pieceIndexRepresentation, int quarterTurns) {
+    int size = pieceIndexRepresentation.length;
+    List<List<int>> rotatedPiece =
+        List.generate(size, (_) => List.filled(size, 0));
+    for (int i = 0; i < size; i++) {
+      for (int j = 0; j < size; j++) {
+        switch (quarterTurns % 4) {
+          case 0:
+            rotatedPiece[i][j] = pieceIndexRepresentation[i][j];
+            break;
+          case 1:
+            rotatedPiece[i][j] = pieceIndexRepresentation[j][size - i - 1];
+            break;
+          case 2:
+            rotatedPiece[i][j] =
+                pieceIndexRepresentation[size - i - 1][size - j - 1];
+            break;
+          case 3:
+            rotatedPiece[i][j] = pieceIndexRepresentation[size - j - 1][i];
+            break;
+        }
+      }
+    }
+    return rotatedPiece;
   }
 
   void resetBoard() {

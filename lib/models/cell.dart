@@ -10,6 +10,6 @@ class Cell {
   }
 
   bool isOccupied() {
-    return occupiedPlayerID.isEmpty;
+    return occupiedPlayerID.isNotEmpty;
   }
 }
