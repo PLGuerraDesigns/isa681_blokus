@@ -1,5 +1,6 @@
 import 'package:blokus/models/game.dart';
 import 'package:blokus/models/piece.dart';
+import 'package:blokus/models/player.dart';
 import 'package:blokus/widgets/board_view.dart';
 import 'package:blokus/widgets/lobby_dialog.dart';
 import 'package:blokus/widgets/piece_collection_view.dart';
@@ -9,9 +10,10 @@ import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 
 class GameBoardPage extends StatefulWidget {
-  const GameBoardPage({super.key, required this.supabase});
+  const GameBoardPage({super.key, required this.supabase, required this.debug});
 
   final SupabaseClient supabase;
+  final bool debug;
 
   @override
   State<GameBoardPage> createState() => GameBoardPageState();
@@ -54,8 +56,13 @@ class GameBoardPageState extends State<GameBoardPage> {
     // await for a frame so that the widget mounts
     await Future.delayed(Duration.zero);
 
-    if (mounted) {
-      _openLobbyDialog();
+    if (!widget.debug) {
+      if (mounted) {
+        _openLobbyDialog();
+      }
+    } else {
+      _game.debug = true;
+      _game.startNewGame(_game.opponents);
     }
   }
 
@@ -86,7 +93,9 @@ class GameBoardPageState extends State<GameBoardPage> {
             children: [
               GameWidget(game: _game),
               Padding(
-                padding: const EdgeInsets.all(20.0),
+                padding: const EdgeInsets.all(
+                  10,
+                ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   mainAxisSize: MainAxisSize.max,
@@ -98,24 +107,28 @@ class GameBoardPageState extends State<GameBoardPage> {
                           children: [
                             PieceCollectionView(
                               player: _game.player,
+                              debug: widget.debug,
                             ),
                             _game.opponents.length < 3
                                 ? Container()
                                 : PieceCollectionView(
                                     player: _game.opponents[2],
+                                    topSpacing: true,
+                                    debug: widget.debug,
                                   ),
                           ]),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 8),
                     AspectRatio(
                       aspectRatio: 1,
                       child: BoardView(
                         board: value.board,
                         addPieceToBoardCallback: (int id, Piece piece) =>
                             _game.addPieceToBoard(id, piece),
+                        debug: widget.debug,
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -123,11 +136,14 @@ class GameBoardPageState extends State<GameBoardPage> {
                           children: [
                             PieceCollectionView(
                               player: _game.opponents[0],
+                              debug: widget.debug,
                             ),
                             _game.opponents.length < 2
                                 ? Container()
                                 : PieceCollectionView(
                                     player: _game.opponents[1],
+                                    topSpacing: true,
+                                    debug: widget.debug,
                                   ),
                           ]),
                     ),

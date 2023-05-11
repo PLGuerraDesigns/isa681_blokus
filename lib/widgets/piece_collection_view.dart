@@ -6,11 +6,11 @@ import "package:flutter/material.dart";
 import 'piece_view.dart';
 
 class PieceCollectionView extends StatelessWidget {
-  const PieceCollectionView({
-    super.key,
-    required this.player,
-  });
+  const PieceCollectionView(
+      {super.key, required this.player, this.topSpacing, this.debug});
   final Player player;
+  final bool? topSpacing;
+  final bool? debug;
 
   List<Widget> gamePieces() {
     final List<Widget> gamePieces = [];
@@ -19,12 +19,15 @@ class PieceCollectionView extends StatelessWidget {
     for (Piece piece in player.pieces) {
       gamePiece = PieceView(
         piece: piece,
+        debug: debug,
       );
       gamePieces.add(
-        player.isOpponent
+        player.isOpponent && debug != true
             ? Opacity(opacity: 0.4, child: gamePiece)
             : Draggable(
                 data: gamePiece,
+                dragAnchorStrategy: (draggable, context, position) =>
+                    pointerDragAnchorStrategy(draggable, context, position),
                 feedback: PieceView(
                   piece: piece,
                   selected: true,
@@ -44,6 +47,7 @@ class PieceCollectionView extends StatelessWidget {
         mainAxisSize: MainAxisSize.max,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          topSpacing == true ? const SizedBox(height: 8) : Container(),
           PlayerBanner(
             player: player,
           ),
@@ -78,7 +82,7 @@ class PieceCollectionView extends StatelessWidget {
                     ),
                     childrenDelegate: SliverChildListDelegate(gamePieces()),
                   ),
-                  player.isOpponent || player.pieces.isEmpty
+                  (player.isOpponent && debug != true) || player.pieces.isEmpty
                       ? Container()
                       : Padding(
                           padding: const EdgeInsets.all(12.0),
@@ -90,10 +94,13 @@ class PieceCollectionView extends StatelessWidget {
                             hoverColor: player.primaryColor.withOpacity(1),
                             hoverElevation: 8,
                             mini: true,
-                            child: const RotatedBox(
-                                quarterTurns: 1,
-                                child:
-                                    Icon(Icons.rotate_90_degrees_cw_outlined)),
+                            child: RotatedBox(
+                                quarterTurns: debug == true ? -0 : 1,
+                                child: debug == true
+                                    ? Text(player.pieces.first.quarterTurns
+                                        .toString())
+                                    : const Icon(
+                                        Icons.rotate_90_degrees_cw_outlined)),
                             onPressed: () => player.rotatePieces(),
                           ),
                         ),

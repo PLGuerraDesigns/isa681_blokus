@@ -24,6 +24,7 @@ class MyApp extends StatelessWidget {
       title: 'Blokus',
       home: GameBoardPage(
         supabase: supabase,
+        debug: true,
       ),
     );
   }

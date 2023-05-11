@@ -72,4 +72,53 @@ extension PieceShapeTypeExtension on PieceShape {
         return PieceIndexRepresentation.z4;
     }
   }
+
+  List<List<int>> getRotatedPieceIndexRep(int quarterTurns) {
+    int size = indexRepresentation.length;
+
+    List<List<int>> rotatedPiece =
+        List.generate(size, (_) => List.filled(size, 0));
+
+    for (int i = 0; i < size; i++) {
+      for (int j = 0; j < size; j++) {
+        switch (quarterTurns % 4) {
+          case 0:
+            rotatedPiece[i][j] = indexRepresentation[i][j];
+            break;
+          case 1:
+            rotatedPiece[i][j] = indexRepresentation[j][size - i - 1];
+            break;
+          case 2:
+            rotatedPiece[i][j] =
+                indexRepresentation[size - i - 1][size - j - 1];
+            break;
+          case 3:
+            rotatedPiece[i][j] = indexRepresentation[size - j - 1][i];
+            break;
+        }
+      }
+    }
+
+    // Remove empty columns
+    rotatedPiece.removeWhere((columns) => !columns.contains(1));
+
+    return rotatedPiece;
+  }
+
+  bool are2DListsEqual(List<List<int>> a, List<List<int>> b) {
+    if (a.length != b.length) {
+      return false;
+    }
+    for (int i = 0; i < a.length; i++) {
+      if (a[i].length != b[i].length) {
+        return false;
+      }
+      for (int j = 0; j < a[i].length; j++) {
+        if (a[i][j] != b[i][j]) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
 }

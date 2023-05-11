@@ -15,34 +15,32 @@ class Player {
 
   late final bool isOpponent;
 
-  Color _primaryColor = Colors.grey;
+  late Color primaryColor;
 
-  Color _secondaryColor = Colors.grey;
+  late Color secondaryColor;
 
   List<Piece> _pieces = [];
 
   List<Piece> get pieces => _pieces;
 
-  Color get primaryColor => _primaryColor;
+  bool get hasSecondaryCollection => secondaryColor.value != Colors.grey.value;
 
-  Color get secondaryColor => _secondaryColor;
-
-  bool get hasSecondaryCollection => _secondaryColor.value != Colors.grey.value;
-
-  Player(
-      {required this.isOpponent,
-      String? uid,
-      String? username,
-      String? roomID}) {
+  Player({
+    required this.isOpponent,
+    String? uid,
+    String? username,
+    String? roomID,
+    Color? primaryColor,
+    Color? secondaryColor,
+  }) {
     this.roomID = roomID ?? '';
     this.uid = uid ?? const Uuid().v4();
     this.username = username ?? UsernameGen().generate().toUpperCase();
+    this.primaryColor = primaryColor ?? Colors.grey;
+    this.secondaryColor = secondaryColor ?? Colors.grey;
   }
 
   void setData(Map<dynamic, dynamic> playerData) {
-    updatePrimaryColor(int.parse(playerData['primaryColorValue']));
-    updateSecondaryColor(int.parse(playerData['secondaryColorValue']));
-
     _pieces = [];
     for (dynamic pieceData in playerData['remainingPieces']) {
       Piece piece = Piece(
@@ -54,24 +52,6 @@ class Player {
         isSecondarySet: pieceData['isSecondarySet'],
       );
       _pieces.add(piece);
-    }
-  }
-
-  void updatePrimaryColor(int colorValue) {
-    try {
-      _primaryColor = Color(colorValue);
-    } catch (_) {
-      _primaryColor = Colors.grey;
-      throw ("Failed to update players ($username) primary color.");
-    }
-  }
-
-  void updateSecondaryColor(int colorValue) {
-    try {
-      _secondaryColor = Color(colorValue);
-    } catch (_) {
-      _secondaryColor = Colors.grey;
-      throw ("Failed to update players ($username) secondary color.");
     }
   }
 

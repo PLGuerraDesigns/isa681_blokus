@@ -48,7 +48,7 @@ class _BoardCellViewState extends State<BoardCellView> {
           setState(() {
             if (data.runtimeType == PieceView) {
               widget.cell.color =
-                  (data as PieceView).piece.color.withOpacity(0.25);
+                  (data as PieceView).piece.color.withOpacity(0.3);
             }
           });
         }

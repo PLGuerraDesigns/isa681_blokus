@@ -121,20 +121,44 @@ class Lobby {
       Colors.amber[600]! // 4294947584
     ];
 
-    for (Player player in roomToLaunch.players) {
-      colorIndex = Random().nextInt(colors.length);
-      player.updatePrimaryColor(colors[colorIndex].value);
-      colors.remove(colors[colorIndex]);
-    }
-
-    while (colors.isNotEmpty) {
-      while (roomToLaunch.players[playerIndex].hasSecondaryCollection) {
-        playerIndex = Random().nextInt(roomToLaunch.players.length);
-      }
-      colorIndex = Random().nextInt(colors.length);
-      roomToLaunch.players[playerIndex]
-          .updateSecondaryColor(colors[colorIndex].value);
-      colors.remove(colors[colorIndex]);
+    switch (roomToLaunch.players.length) {
+      case 4:
+        // Assign all colors at random
+        for (Player player in roomToLaunch.players) {
+          colorIndex = Random().nextInt(colors.length);
+          player.primaryColor = Color(colors[colorIndex].value);
+          colors.remove(colors[colorIndex]);
+        }
+        break;
+      case 3:
+        // Assign Blue and Red to a random player,
+        // then assign remaining colors randomly
+        roomToLaunch.players[playerIndex].primaryColor = Color(colors[0].value);
+        colors.remove(colors[0]);
+        roomToLaunch.players[playerIndex].secondaryColor =
+            Color(colors[0].value);
+        colors.remove(colors[0]);
+        // Assign all colors at random
+        for (Player player in roomToLaunch.players) {
+          if (player == roomToLaunch.players[playerIndex]) {
+            continue;
+          }
+          colorIndex = Random().nextInt(colors.length);
+          player.primaryColor = Color(colors[colorIndex].value);
+          colors.remove(colors[colorIndex]);
+        }
+        break;
+      default:
+        // If 2 players, assign Red & Blue to a Random user, then Green & Amber
+        roomToLaunch.players[playerIndex].primaryColor = Color(colors[0].value);
+        roomToLaunch.players[playerIndex].secondaryColor =
+            Color(colors[1].value);
+        roomToLaunch.players
+            .firstWhere((player) => player != roomToLaunch.players[playerIndex])
+            .primaryColor = Color(colors[2].value);
+        roomToLaunch.players
+            .firstWhere((player) => player != roomToLaunch.players[playerIndex])
+            .secondaryColor = Color(colors[3].value);
     }
   }
 
@@ -152,8 +176,9 @@ class Lobby {
           .first;
 
       // Update player colors
-      player.updatePrimaryColor(int.parse(playerData['primaryColorValue']));
-      player.updateSecondaryColor(int.parse(playerData['secondaryColorValue']));
+      player.primaryColor = Color(int.parse(playerData['primaryColorValue']));
+      player.secondaryColor =
+          Color(int.parse(playerData['secondaryColorValue']));
 
       List<Player> opponents = rooms
           .where((room) => room.id == selectedRoomID)

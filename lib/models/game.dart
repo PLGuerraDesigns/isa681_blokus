@@ -25,9 +25,17 @@ class BlokusGame extends FlameGame with ChangeNotifier {
 
   bool isGameOver = true;
 
-  final Player _player = Player(isOpponent: false);
+  final Player _player = Player(
+      isOpponent: false, primaryColor: Colors.blue, secondaryColor: Colors.red);
 
-  List<Player> _opponents = [Player(isOpponent: true)];
+  List<Player> _opponents = [
+    Player(
+        isOpponent: true,
+        primaryColor: Colors.green,
+        secondaryColor: Colors.amber[700])
+  ];
+
+  bool debug = false;
 
   Player get player => _player;
 
@@ -51,25 +59,29 @@ class BlokusGame extends FlameGame with ChangeNotifier {
     if (isGameOver) {
       return;
     }
+    if (!debug) {
+      ChannelResponse response;
 
-    ChannelResponse response;
-
-    do {
-      response = await realtimeChannel!.send(
-        type: RealtimeListenTypes.broadcast,
-        event: 'game_state',
-        payload: {
-          'boardConfiguration': _board.configuration,
-          'playerData': json.encode(_player.data()),
-        },
-      );
-      await Future.delayed(Duration.zero);
-      notifyListeners();
-    } while (response == ChannelResponse.rateLimited);
+      do {
+        response = await realtimeChannel!.send(
+          type: RealtimeListenTypes.broadcast,
+          event: 'game_state',
+          payload: {
+            'boardConfiguration': _board.configuration,
+            'playerData': json.encode(_player.data()),
+          },
+        );
+        await Future.delayed(Duration.zero);
+        notifyListeners();
+      } while (response == ChannelResponse.rateLimited);
+    }
 
     if (_player.pieces.isEmpty ||
         _opponents.where((opponent) => opponent.pieces.isEmpty).isNotEmpty) {
       endGame(false);
+    }
+    if (debug) {
+      notifyListeners();
     }
   }
 
@@ -114,6 +126,7 @@ class BlokusGame extends FlameGame with ChangeNotifier {
     for (Player opponent in _opponents) {
       opponent.initializePieces();
     }
+    notifyListeners();
   }
 
   void updateOpponent(String opponentPayload) {
