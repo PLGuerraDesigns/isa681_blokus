@@ -14,9 +14,15 @@ class BoardView extends StatelessWidget {
   final Function(int, Piece) addPieceToBoardCallback;
   static final List<Color> cornerColors = [
     Colors.blue,
+<<<<<<< HEAD
     Colors.amber[700]!,
     Colors.green,
     Colors.red
+=======
+    Colors.amber[600]!,
+    Colors.red,
+    Colors.green,
+>>>>>>> dev-cst
   ];
 
   @override

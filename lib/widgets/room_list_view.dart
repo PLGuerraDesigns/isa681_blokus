@@ -77,7 +77,10 @@ class RoomListView extends StatelessWidget {
                 for (Player player in room.players)
                   Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: PlayerAvatar(player: player)),
+                      child: PlayerAvatar(
+                        player: player,
+                        transparentBackground: false,
+                      )),
                 const Spacer(),
                 RoomJoinButton(
                   room: room,

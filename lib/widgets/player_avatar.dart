@@ -6,10 +6,21 @@ class PlayerAvatar extends StatelessWidget {
   const PlayerAvatar({
     super.key,
     required this.player,
+<<<<<<< HEAD
     this.allowEdit,
   });
   final Player player;
   final bool? allowEdit;
+=======
+    required this.transparentBackground,
+    this.allowEdit,
+    this.score,
+  });
+  final Player player;
+  final bool? allowEdit;
+  final bool transparentBackground;
+  final String? score;
+>>>>>>> dev-cst
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +54,18 @@ class PlayerAvatar extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+<<<<<<< HEAD
                     RandomAvatar(player.uid, height: 60),
+=======
+                    CircleAvatar(
+                      radius: 40,
+                      backgroundColor: player.primaryColor,
+                      child: RandomAvatar(
+                        player.uid,
+                        trBackground: true,
+                      ),
+                    ),
+>>>>>>> dev-cst
                     const SizedBox(height: 8),
                     Text(
                       '${player.username}\n',
@@ -52,7 +74,11 @@ class PlayerAvatar extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.center,
+<<<<<<< HEAD
                     )
+=======
+                    ),
+>>>>>>> dev-cst
                   ],
                 ),
               ),

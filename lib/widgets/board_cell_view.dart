@@ -63,7 +63,13 @@ class _BoardCellViewState extends State<BoardCellView> {
       },
       onAccept: (PieceView data) {
         setState(() {
+<<<<<<< HEAD
           widget.cell.color = Colors.grey[300]!;
+=======
+          if (!widget.cell.isOccupied()) {
+            widget.cell.color = Colors.grey[300]!;
+          }
+>>>>>>> dev-cst
         });
         widget.addPieceToBoardCallback(data.piece);
       },

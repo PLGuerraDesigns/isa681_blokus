@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:blokus/constants/custom_enums.dart';
 import 'package:blokus/models/board.dart';
 import 'package:blokus/models/piece.dart';
 import 'package:blokus/models/player.dart';
@@ -11,12 +12,20 @@ class BlokusGame extends FlameGame with ChangeNotifier {
   BlokusGame({
     required this.onGameOverCallback,
     required this.supabase,
-  });
+  }) {
+    participants = [
+      player,
+      Player(
+          isOpponent: true,
+          primaryColor: Colors.amber[600],
+          secondaryColor: Colors.green),
+    ];
+  }
 
   final SupabaseClient supabase;
 
   /// Callback to notify the parent when the game ends.
-  final void Function(bool didWin) onGameOverCallback;
+  final void Function() onGameOverCallback;
 
   final Board _board = Board(numberOfColumns: 20);
 
@@ -28,18 +37,27 @@ class BlokusGame extends FlameGame with ChangeNotifier {
   final Player _player = Player(
       isOpponent: false, primaryColor: Colors.blue, secondaryColor: Colors.red);
 
-  List<Player> _opponents = [
-    Player(
-        isOpponent: true,
-        primaryColor: Colors.green,
-        secondaryColor: Colors.amber[700])
+  final List<Color> colorTurnOrder = [
+    Colors.blue,
+    Colors.amber[600]!,
+    Colors.red,
+    Colors.green,
   ];
+
+  int _colorTurnValue = Colors.blue.value;
+
+  Piece? _lastPiecePlayed;
+
+  int get colorTurnValue => _colorTurnValue;
+
+  List<Player> participants = [];
 
   bool debug = false;
 
   Player get player => _player;
 
-  List<Player> get opponents => _opponents;
+  List<Player> get opponents =>
+      participants.where((participant) => participant != player).toList();
 
   Board get board => _board;
 
@@ -59,6 +77,9 @@ class BlokusGame extends FlameGame with ChangeNotifier {
     if (isGameOver) {
       return;
     }
+
+    _checkPlayerTurn();
+
     if (!debug) {
       ChannelResponse response;
 
@@ -69,6 +90,9 @@ class BlokusGame extends FlameGame with ChangeNotifier {
           payload: {
             'boardConfiguration': _board.configuration,
             'playerData': json.encode(_player.data()),
+            'lastPiecePlayed': _player.lastPiecePlayed == null
+                ? null
+                : json.encode(_player.lastPiecePlayed!.data()),
           },
         );
         await Future.delayed(Duration.zero);
@@ -76,22 +100,19 @@ class BlokusGame extends FlameGame with ChangeNotifier {
       } while (response == ChannelResponse.rateLimited);
     }
 
-    if (_player.pieces.isEmpty ||
-        _opponents.where((opponent) => opponent.pieces.isEmpty).isNotEmpty) {
-      endGame(false);
+    if (participants.where((player) => player.pieces.isEmpty).isNotEmpty) {
+      endGame();
     }
     if (debug) {
       notifyListeners();
     }
   }
 
-  void onGameStarted(roomID, opponents) async {
+  void onGameStarted(roomID, allParticipants) async {
     // await a frame to allow subscribing to a new channel in a realtime callback
     await Future.delayed(Duration.zero);
 
-    startNewGame(opponents);
-
-    notifyListeners();
+    startNewGame(allParticipants);
 
     realtimeChannel =
         supabase.channel(roomID, opts: const RealtimeChannelConfig(ack: true));
@@ -101,15 +122,34 @@ class BlokusGame extends FlameGame with ChangeNotifier {
             (payload, [_]) {
       _board.setUpBoard(payload['boardConfiguration']);
       updateOpponent(payload['playerData']);
-
-      // if (player.pieces.isEmpty ||
-      //     opponents.where((opponent) => opponent.pieces.isEmpty).isNotEmpty) {
-      //   if (!isGameOver) {
-      //     isGameOver = true;
-      //     onGameOver(true);
-      //   }
-      // }
+      updateLastPiecePlayed(payload['lastPiecePlayed']);
     }).subscribe();
+  }
+
+  void startNewGame(List<Player> allParticipants) {
+    isGameOver = false;
+    participants = allParticipants;
+
+    _board.resetBoard();
+    _player.initializePieces();
+    for (Player opponent in opponents) {
+      opponent.initializePieces();
+    }
+    notifyListeners();
+  }
+
+  void _checkPlayerTurn() {
+    int colorTurnOrderIndex = 0;
+
+    participants.sort((a, b) => colorTurnOrder
+        .indexOf(a.primaryColor)
+        .compareTo(colorTurnOrder.indexOf(b.primaryColor)));
+
+    if (_lastPiecePlayed != null) {
+      colorTurnOrderIndex = colorTurnOrder
+          .indexWhere((color) => color.value == _lastPiecePlayed!.color.value);
+      _colorTurnValue = colorTurnOrder[(colorTurnOrderIndex + 1) % 4].value;
+    }
   }
 
   void returnToLobbyCallback(BuildContext context) async {
@@ -117,16 +157,20 @@ class BlokusGame extends FlameGame with ChangeNotifier {
     await supabase.removeChannel(realtimeChannel!);
   }
 
-  void startNewGame(List<Player> newOpponents) {
-    isGameOver = false;
-    _opponents = newOpponents;
-
-    _board.resetBoard();
-    _player.initializePieces();
-    for (Player opponent in _opponents) {
-      opponent.initializePieces();
+  void updateLastPiecePlayed(String? lastPiecePlayedPayload) {
+    if (lastPiecePlayedPayload != null) {
+      dynamic pieceData = jsonDecode(lastPiecePlayedPayload);
+      if (colorTurnValue == int.parse(pieceData['colorValue'])) {
+        _lastPiecePlayed = Piece(
+          playerUID: pieceData['playerUID'],
+          color: Color(int.parse(pieceData['colorValue'])),
+          shape: PieceShape.values
+              .where((piece) => piece.name == pieceData['shape'])
+              .first,
+          isSecondarySet: pieceData['isSecondarySet'],
+        );
+      }
     }
-    notifyListeners();
   }
 
   void updateOpponent(String opponentPayload) {
@@ -139,16 +183,24 @@ class BlokusGame extends FlameGame with ChangeNotifier {
     }
   }
 
-  void addPieceToBoard(int id, Piece piece) {
-    if (_board.validPiecePlacement(targetCellID: id, piece: piece)) {
+  void addPieceToBoard(BuildContext context, int id, Piece piece) {
+    if (_board.validPiecePlacement(
+      targetCellID: id,
+      piece: piece,
+      context: context,
+    )) {
       _board.addPiece(targetCellID: id, piece: piece);
       _player.removePlayerPiece(piece);
+      _lastPiecePlayed = piece;
     }
   }
 
-  /// Called when either the player or the opponent has run out of health points
-  void endGame(bool playerWon) {
+  /// Called when either the player or the opponent has run out of pieces.
+  void endGame() {
     isGameOver = true;
-    onGameOverCallback(playerWon);
+    for (Player player in participants) {
+      player.calculateFinalScore();
+    }
+    onGameOverCallback();
   }
 }

@@ -97,9 +97,6 @@ class Lobby {
 
     _assignPlayerColors(roomToLaunch);
 
-    // print(roomToLaunch.players.map((player) =>
-    // '${player.username}: (${player.primaryColor.value}, ${player.secondaryColor.value}) (hasSecondaryCollection: ${player.hasSecondaryCollection})'));
-
     await realtimeChannel.send(
       type: RealtimeListenTypes.broadcast,
       event: 'game_start',
@@ -153,12 +150,10 @@ class Lobby {
         roomToLaunch.players[playerIndex].primaryColor = Color(colors[0].value);
         roomToLaunch.players[playerIndex].secondaryColor =
             Color(colors[1].value);
-        roomToLaunch.players
-            .firstWhere((player) => player != roomToLaunch.players[playerIndex])
-            .primaryColor = Color(colors[2].value);
-        roomToLaunch.players
-            .firstWhere((player) => player != roomToLaunch.players[playerIndex])
-            .secondaryColor = Color(colors[3].value);
+        roomToLaunch.players[(playerIndex + 1) % 2].primaryColor =
+            Color(colors[3].value);
+        roomToLaunch.players[(playerIndex + 1) % 2].secondaryColor =
+            Color(colors[2].value);
     }
   }
 

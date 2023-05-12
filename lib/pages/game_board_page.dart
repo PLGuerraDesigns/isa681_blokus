@@ -1,7 +1,12 @@
 import 'package:blokus/models/game.dart';
 import 'package:blokus/models/piece.dart';
+<<<<<<< HEAD
 import 'package:blokus/models/player.dart';
 import 'package:blokus/widgets/board_view.dart';
+=======
+import 'package:blokus/widgets/board_view.dart';
+import 'package:blokus/widgets/game_over_dialog.dart';
+>>>>>>> dev-cst
 import 'package:blokus/widgets/lobby_dialog.dart';
 import 'package:blokus/widgets/piece_collection_view.dart';
 import 'package:provider/provider.dart';
@@ -31,11 +36,16 @@ class GameBoardPageState extends State<GameBoardPage> {
   Future<void> _initialize() async {
     _game = BlokusGame(
       supabase: widget.supabase,
+<<<<<<< HEAD
       onGameOverCallback: (playerWon) async {
+=======
+      onGameOverCallback: () async {
+>>>>>>> dev-cst
         await showDialog(
           barrierDismissible: false,
           context: context,
           builder: ((context) {
+<<<<<<< HEAD
             return AlertDialog(
               title: Text(playerWon ? 'You Won!' : 'You lost...'),
               actions: [
@@ -47,6 +57,11 @@ class GameBoardPageState extends State<GameBoardPage> {
                   child: const Text('Back to Lobby'),
                 ),
               ],
+=======
+            return GameOverDialog(
+              returnToLobbyCallback: _game.returnToLobbyCallback,
+              participants: _game.participants,
+>>>>>>> dev-cst
             );
           }),
         );
@@ -62,7 +77,11 @@ class GameBoardPageState extends State<GameBoardPage> {
       }
     } else {
       _game.debug = true;
+<<<<<<< HEAD
       _game.startNewGame(_game.opponents);
+=======
+      _game.startNewGame(_game.participants);
+>>>>>>> dev-cst
     }
   }
 
@@ -97,8 +116,13 @@ class GameBoardPageState extends State<GameBoardPage> {
                   10,
                 ),
                 child: Row(
+<<<<<<< HEAD
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   mainAxisSize: MainAxisSize.max,
+=======
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
+>>>>>>> dev-cst
                   children: [
                     Expanded(
                       child: Column(
@@ -108,6 +132,10 @@ class GameBoardPageState extends State<GameBoardPage> {
                             PieceCollectionView(
                               player: _game.player,
                               debug: widget.debug,
+<<<<<<< HEAD
+=======
+                              colorTurnValue: _game.colorTurnValue,
+>>>>>>> dev-cst
                             ),
                             _game.opponents.length < 3
                                 ? Container()
@@ -115,6 +143,10 @@ class GameBoardPageState extends State<GameBoardPage> {
                                     player: _game.opponents[2],
                                     topSpacing: true,
                                     debug: widget.debug,
+<<<<<<< HEAD
+=======
+                                    colorTurnValue: _game.colorTurnValue,
+>>>>>>> dev-cst
                                   ),
                           ]),
                     ),
@@ -124,7 +156,15 @@ class GameBoardPageState extends State<GameBoardPage> {
                       child: BoardView(
                         board: value.board,
                         addPieceToBoardCallback: (int id, Piece piece) =>
+<<<<<<< HEAD
                             _game.addPieceToBoard(id, piece),
+=======
+                            _game.addPieceToBoard(
+                          context,
+                          id,
+                          piece,
+                        ),
+>>>>>>> dev-cst
                         debug: widget.debug,
                       ),
                     ),
@@ -134,16 +174,33 @@ class GameBoardPageState extends State<GameBoardPage> {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           mainAxisSize: MainAxisSize.max,
                           children: [
+<<<<<<< HEAD
                             PieceCollectionView(
                               player: _game.opponents[0],
                               debug: widget.debug,
                             ),
+=======
+                            _game.opponents.isEmpty
+                                ? const Expanded(
+                                    child: Center(
+                                        child: CircularProgressIndicator()),
+                                  )
+                                : PieceCollectionView(
+                                    player: _game.opponents[0],
+                                    debug: widget.debug,
+                                    colorTurnValue: _game.colorTurnValue,
+                                  ),
+>>>>>>> dev-cst
                             _game.opponents.length < 2
                                 ? Container()
                                 : PieceCollectionView(
                                     player: _game.opponents[1],
                                     topSpacing: true,
                                     debug: widget.debug,
+<<<<<<< HEAD
+=======
+                                    colorTurnValue: _game.colorTurnValue,
+>>>>>>> dev-cst
                                   ),
                           ]),
                     ),

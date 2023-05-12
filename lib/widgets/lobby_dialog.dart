@@ -15,7 +15,12 @@ class LobbyDialog extends StatefulWidget {
   });
 
   final SupabaseClient supabase;
+<<<<<<< HEAD
   final void Function(String gameId, List<Player> opponents) onGameStarted;
+=======
+  final void Function(String gameId, List<Player> allParticipants)
+      onGameStarted;
+>>>>>>> dev-cst
   final Player player;
 
   @override
@@ -77,6 +82,10 @@ class LobbyDialogState extends State<LobbyDialog> {
           Align(
             alignment: Alignment.centerRight,
             child: PlayerAvatar(
+<<<<<<< HEAD
+=======
+              transparentBackground: false,
+>>>>>>> dev-cst
               player: widget.player,
               allowEdit: true,
             ),
