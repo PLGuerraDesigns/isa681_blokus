@@ -16,6 +16,9 @@ dependencies:
   supabase_flutter: ^1.4.0
   flame: ^1.6.0
   uuid: ^3.0.7
+  username_gen:
+  provider:
+  random_avatar:
 
 dev_dependencies:
   flutter_test:

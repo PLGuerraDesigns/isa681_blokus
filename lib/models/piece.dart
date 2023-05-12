@@ -1,43 +1,38 @@
+import 'dart:convert';
+
 import 'package:blokus/constants/custom_enums.dart';
-import 'package:blokus/models/cell.dart';
 import 'package:flutter/material.dart';
 
-class Piece extends StatelessWidget {
+class Piece {
   final Color color;
   final PieceShape shape;
-  final bool? selected;
+  final String playerUID;
+  late final bool? isSecondarySet;
+  late int quarterTurns;
 
-  const Piece(
-      {super.key, required this.color, required this.shape, this.selected});
-
-  @override
-  Widget build(BuildContext context) {
-    return FittedBox(
-        fit: BoxFit.scaleDown,
-        child: SizedBox(
-            width: selected == true ? 125 : 100,
-            height: selected == true ? 125 : 100,
-            child: gamePiece()));
+  Piece({
+    required this.color,
+    required this.shape,
+    required this.playerUID,
+    bool? isSecondarySet,
+    int? quarterTurns,
+  }) {
+    this.isSecondarySet = isSecondarySet ?? false;
+    this.quarterTurns = quarterTurns ?? 0;
   }
 
-  Widget gamePiece() {
-    List<Cell> piece = [];
-    int maxRowLength = 3;
-    for (List<int> row in shape.indexRepresentation) {
-      if (row.length > maxRowLength) {
-        maxRowLength = row.length;
-      }
-      for (int index in row) {
-        piece.add(Cell(color: index == 1 ? color : Colors.transparent));
-      }
-    }
+  Map<String, dynamic> data() {
+    return {
+      'shape': shape.name.toString(),
+      'colorValue': color.value.toString(),
+      'playerUID': playerUID,
+      'isSecondarySet': isSecondarySet,
+      'quarterTurns': quarterTurns,
+    };
+  }
 
-    return GridView.custom(
-      physics: const NeverScrollableScrollPhysics(),
-      scrollDirection: Axis.horizontal,
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: maxRowLength),
-      childrenDelegate: SliverChildListDelegate(piece),
-    );
+  @override
+  String toString() {
+    return json.encode(data());
   }
 }
