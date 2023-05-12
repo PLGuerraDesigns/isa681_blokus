@@ -6,13 +6,6 @@ import "package:flutter/material.dart";
 import 'piece_view.dart';
 
 class PieceCollectionView extends StatelessWidget {
-<<<<<<< HEAD
-  const PieceCollectionView(
-      {super.key, required this.player, this.topSpacing, this.debug});
-  final Player player;
-  final bool? topSpacing;
-  final bool? debug;
-=======
   const PieceCollectionView({
     super.key,
     required this.player,
@@ -25,7 +18,6 @@ class PieceCollectionView extends StatelessWidget {
   final bool? debug;
   static late bool playersTurn;
   final int colorTurnValue;
->>>>>>> dev-cst
 
   List<Widget> gamePieces() {
     final List<Widget> gamePieces = [];
@@ -37,12 +29,8 @@ class PieceCollectionView extends StatelessWidget {
         debug: debug,
       );
       gamePieces.add(
-<<<<<<< HEAD
-        player.isOpponent && debug != true
-=======
         (debug != true && player.isOpponent) ||
                 colorTurnValue != piece.color.value
->>>>>>> dev-cst
             ? Opacity(opacity: 0.4, child: gamePiece)
             : Draggable(
                 data: gamePiece,
@@ -62,11 +50,8 @@ class PieceCollectionView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-<<<<<<< HEAD
-=======
     playersTurn = colorTurnValue == player.primaryColor.value ||
         colorTurnValue == player.secondaryColor.value;
->>>>>>> dev-cst
     return Expanded(
       child: Column(
         mainAxisSize: MainAxisSize.max,
@@ -75,11 +60,8 @@ class PieceCollectionView extends StatelessWidget {
           topSpacing == true ? const SizedBox(height: 8) : Container(),
           PlayerBanner(
             player: player,
-<<<<<<< HEAD
-=======
             playersTurn: playersTurn,
             messageBannerColor: Color(colorTurnValue),
->>>>>>> dev-cst
           ),
           Expanded(
             child: Container(
