@@ -4,7 +4,7 @@ description: Multiplayer Blokus game using Flutter, Flame and Supabase.
 publish_to: "none"
 
 # ! UPDATE VERSION NUMBER
-version: 0.1.0+3
+version: 0.4.0+8
 
 environment:
   sdk: ">=2.19.0 <3.0.0"
@@ -16,13 +16,10 @@ dependencies:
   supabase_flutter: ^1.4.0
   random_avatar: ^0.0.8
   username_gen: ^1.0.4
+  go_router: ^7.0.1
   provider: ^6.0.5
   flame: ^1.6.0
   uuid: ^3.0.7
-  username_gen:
-  provider:
-  random_avatar:
-
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -33,3 +30,9 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
+  fonts:
+    - family: LemonMilk
+      fonts:
+        - asset: assets/fonts/lemon_milk.otf
+        - asset: assets/fonts/lemon_milk_light.otf
+          weight: 300

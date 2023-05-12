@@ -27,7 +27,7 @@ class Lobby {
         .map((presences) => Player(
             isOpponent: true,
             uid: ((presences.first as Presence).payload['uid']),
-            username: ((presences.first as Presence).payload['username']),
+            emailAddress: ((presences.first as Presence).payload['username']),
             roomID:
                 ((presences.first as Presence).payload['room_id']).toString()))
         .toList();
@@ -51,6 +51,9 @@ class Lobby {
         }
       }
     }
+    if (selectedRoomID.isEmpty) {
+      autoJoinRoom();
+    }
   }
 
   /// The data to subscribe to.
@@ -70,6 +73,16 @@ class Lobby {
     rooms.add(newRoom);
     createdRoomID = newRoom.id;
     joinRoomCallback(createdRoomID);
+  }
+
+  /// Handle multiple instances of the same player.
+  void autoJoinRoom() {
+    for (Room room in rooms) {
+      if (room.players.map((e) => e.uid).contains(player.uid)) {
+        selectedRoomID = room.id;
+        sendSyncData();
+      }
+    }
   }
 
   void joinRoomCallback(String roomID) async {

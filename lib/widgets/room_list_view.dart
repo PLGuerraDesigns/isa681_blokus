@@ -111,7 +111,7 @@ class RoomListView extends StatelessWidget {
           : rooms.isEmpty
               ? const Center(
                   child: Text(
-                    "NO ACTIVE ROOMS\n\nCreate one to get started.",
+                    "NO AVAILABLE ROOMS\n\nCreate one to get started.",
                     style: TextStyle(color: Colors.black45),
                     textAlign: TextAlign.center,
                   ),

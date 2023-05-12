@@ -1,5 +1,6 @@
 import "package:blokus/models/piece.dart";
 import "package:blokus/models/player.dart";
+import "package:blokus/widgets/message_banner.dart";
 import "package:blokus/widgets/player_banner.dart";
 import "package:flutter/material.dart";
 
@@ -53,74 +54,83 @@ class PieceCollectionView extends StatelessWidget {
     playersTurn = colorTurnValue == player.primaryColor.value ||
         colorTurnValue == player.secondaryColor.value;
     return Expanded(
-      child: Column(
-        mainAxisSize: MainAxisSize.max,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          topSpacing == true ? const SizedBox(height: 8) : Container(),
-          PlayerBanner(
-            player: player,
-            playersTurn: playersTurn,
-            messageBannerColor: Color(colorTurnValue),
-          ),
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  width: 2,
-                  color: player.primaryColor,
-                ),
-                gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      player.primaryColor.withOpacity(0.1),
-                      player.hasSecondaryCollection
-                          ? player.secondaryColor.withOpacity(0.1)
-                          : player.primaryColor.withOpacity(0.1)
-                    ]),
-              ),
-              child: Stack(
-                alignment: Alignment.topRight,
-                children: [
-                  GridView.custom(
-                    padding: const EdgeInsets.all(20),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      mainAxisSpacing: 20,
-                      crossAxisSpacing: 20,
-                      crossAxisCount: 3,
-                    ),
-                    childrenDelegate: SliverChildListDelegate(gamePieces()),
-                  ),
-                  (player.isOpponent && debug != true) || player.pieces.isEmpty
-                      ? Container()
-                      : Padding(
-                          padding: const EdgeInsets.all(12.0),
-                          child: FloatingActionButton(
-                            tooltip: 'Rotate Pieces',
-                            elevation: 0,
-                            backgroundColor:
-                                player.primaryColor.withOpacity(0.6),
-                            hoverColor: player.primaryColor.withOpacity(1),
-                            hoverElevation: 8,
-                            mini: true,
-                            child: RotatedBox(
-                                quarterTurns: debug == true ? -0 : 1,
-                                child: debug == true
-                                    ? Text(player.pieces.first.quarterTurns
-                                        .toString())
-                                    : const Icon(
-                                        Icons.rotate_90_degrees_cw_outlined)),
-                            onPressed: () => player.rotatePieces(),
-                          ),
-                        ),
-                ],
+      child: Opacity(
+        opacity: player.leftTheGame ? 0.5 : 1,
+        child: Column(
+          mainAxisSize: MainAxisSize.max,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            topSpacing == true ? const SizedBox(height: 8) : Container(),
+            MessageBanner(
+              message: 'PLAYER LEFT',
+              enabled: player.leftTheGame,
+              color: Colors.red[800]!,
+              child: PlayerBanner(
+                player: player,
+                playersTurn: playersTurn,
+                messageBannerColor: Color(colorTurnValue),
               ),
             ),
-          ),
-        ],
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    width: 2,
+                    color: player.primaryColor,
+                  ),
+                  gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        player.primaryColor.withOpacity(0.1),
+                        player.hasSecondaryCollection
+                            ? player.secondaryColor.withOpacity(0.1)
+                            : player.primaryColor.withOpacity(0.1)
+                      ]),
+                ),
+                child: Stack(
+                  alignment: Alignment.topRight,
+                  children: [
+                    GridView.custom(
+                      padding: const EdgeInsets.all(20),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        mainAxisSpacing: 20,
+                        crossAxisSpacing: 20,
+                        crossAxisCount: 3,
+                      ),
+                      childrenDelegate: SliverChildListDelegate(gamePieces()),
+                    ),
+                    (player.isOpponent && debug != true) ||
+                            player.pieces.isEmpty
+                        ? Container()
+                        : Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: FloatingActionButton(
+                              tooltip: 'Rotate Pieces',
+                              elevation: 0,
+                              backgroundColor:
+                                  player.primaryColor.withOpacity(0.6),
+                              hoverColor: player.primaryColor.withOpacity(1),
+                              hoverElevation: 8,
+                              mini: true,
+                              child: RotatedBox(
+                                  quarterTurns: debug == true ? -0 : 1,
+                                  child: debug == true
+                                      ? Text(player.pieces.first.quarterTurns
+                                          .toString())
+                                      : const Icon(
+                                          Icons.rotate_90_degrees_cw_outlined)),
+                              onPressed: () => player.rotatePieces(),
+                            ),
+                          ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
