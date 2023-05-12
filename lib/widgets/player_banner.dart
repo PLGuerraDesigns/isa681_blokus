@@ -1,4 +1,5 @@
 import 'package:blokus/models/player.dart';
+import 'package:blokus/widgets/message_banner.dart';
 import 'package:flame/extensions.dart';
 import 'package:flutter/material.dart';
 import 'package:random_avatar/random_avatar.dart';
@@ -16,16 +17,11 @@ class PlayerBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(10),
-      child: !playersTurn
-          ? _playerListTile()
-          : Banner(
-              message: player.isOpponent ? "PLAYER'S TURN" : "YOUR TURN",
-              location: BannerLocation.topStart,
-              color: messageBannerColor,
-              child: _playerListTile(),
-            ),
+    return MessageBanner(
+      message: player.isOpponent ? "PLAYER'S TURN" : "YOUR TURN",
+      enabled: playersTurn,
+      color: messageBannerColor,
+      child: _playerListTile(),
     );
   }
 
@@ -50,7 +46,7 @@ class PlayerBanner extends StatelessWidget {
         enabled: false,
         leading: CircleAvatar(
             backgroundColor: player.primaryColor,
-            child: RandomAvatar(player.uid,
+            child: RandomAvatar(player.username,
                 trBackground: true, height: 50, width: 50)),
         title: Text(
           player.username,

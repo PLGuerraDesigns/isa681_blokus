@@ -6,7 +6,7 @@ import 'package:uuid/uuid.dart';
 class Room {
   late final String id;
   final String name;
-  late List<Player> _players;
+  final List<Player> _players = [];
 
   List<Player> get players => _players;
 
@@ -16,7 +16,21 @@ class Room {
     List<Player>? players,
   }) {
     this.id = id ?? const Uuid().v4();
-    _players = players ?? [];
+    if (players != null) {
+      loadPlayers(players);
+    }
+  }
+
+  void loadPlayers(List<Player> players) {
+    for (Player newPlayer in players) {
+      if (!_players
+          .map((currentPlayers) => currentPlayers.uid)
+          .contains(newPlayer.uid)) {
+        if (players.length < 4) {
+          _players.add(newPlayer);
+        }
+      }
+    }
   }
 
   void addPlayer(Player player) {

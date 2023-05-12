@@ -7,28 +7,23 @@ class PlayerAvatar extends StatelessWidget {
     super.key,
     required this.player,
     required this.transparentBackground,
-    this.allowEdit,
     this.score,
+    this.signOutCallback,
   });
   final Player player;
-  final bool? allowEdit;
   final bool transparentBackground;
   final String? score;
+  final Function()? signOutCallback;
 
   @override
   Widget build(BuildContext context) {
     return FittedBox(
       fit: BoxFit.scaleDown,
       child: Tooltip(
-        message: allowEdit != true ? '' : 'EDIT PROFILE',
+        message: signOutCallback == null ? '' : 'SIGN OUT',
         waitDuration: const Duration(milliseconds: 500),
         child: GestureDetector(
-          onTap: allowEdit != true
-              ? null
-              : () {
-                  // TODO: IMPLEMENT EDIT PLAYER PROFILE
-                  throw ('MISSING EDIT PLAYER PROFILE IMPLEMENTATION.');
-                },
+          onTap: signOutCallback,
           child: Stack(
             alignment: Alignment.topRight,
             children: [
@@ -47,12 +42,13 @@ class PlayerAvatar extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    const SizedBox(height: 8),
                     CircleAvatar(
                       radius: 40,
                       backgroundColor: player.primaryColor,
                       child: RandomAvatar(
-                        player.uid,
-                        trBackground: true,
+                        player.username,
+                        trBackground: transparentBackground,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -67,7 +63,7 @@ class PlayerAvatar extends StatelessWidget {
                   ],
                 ),
               ),
-              allowEdit != true
+              signOutCallback == null
                   ? Container()
                   : const Align(
                       alignment: Alignment.topRight,
@@ -75,7 +71,7 @@ class PlayerAvatar extends StatelessWidget {
                         padding:
                             EdgeInsets.symmetric(vertical: 6, horizontal: 8),
                         child: Icon(
-                          Icons.more_horiz,
+                          Icons.logout_outlined,
                           size: 20,
                           color: Colors.black54,
                         ),

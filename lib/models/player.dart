@@ -23,6 +23,8 @@ class Player {
 
   Piece? _lastPiecePlayed;
 
+  bool leftTheGame = false;
+
   List<Piece> _pieces = [];
 
   List<Piece> get pieces => _pieces;
@@ -31,19 +33,22 @@ class Player {
 
   bool get hasSecondaryCollection => secondaryColor.value != Colors.grey.value;
 
+  late DateTime lastActiveDateTime;
+
   Player({
     required this.isOpponent,
     String? uid,
-    String? username,
+    String? emailAddress,
     String? roomID,
     Color? primaryColor,
     Color? secondaryColor,
   }) {
+    lastActiveDateTime = DateTime.now();
     this.roomID = roomID ?? '';
     this.uid = uid ?? const Uuid().v4();
-    this.username = username ?? UsernameGen().generate().toUpperCase();
     this.primaryColor = primaryColor ?? Colors.grey;
     this.secondaryColor = secondaryColor ?? Colors.grey;
+    username = emailAddress ?? UsernameGen().generate().toUpperCase();
   }
 
   void calculateFinalScore() {
@@ -72,6 +77,7 @@ class Player {
   void setData(Map<dynamic, dynamic> playerData) {
     primaryColor = Color(int.parse(playerData['primaryColorValue']));
     secondaryColor = Color(int.parse(playerData['secondaryColorValue']));
+    lastActiveDateTime = DateTime.parse(playerData['lastActiveDateTime']);
 
     if (playerData['lastPiecePlayed'] != null) {
       _lastPiecePlayed = Piece(
@@ -146,6 +152,7 @@ class Player {
       'lastPiecePlayed':
           lastPiecePlayed == null ? null : lastPiecePlayed!.data(),
       'remainingPieces': pieces.map((Piece piece) => piece.data()).toList(),
+      'lastActiveDateTime': DateTime.now().toIso8601String(),
     };
   }
 

@@ -1,19 +1,24 @@
 import 'package:blokus/models/game.dart';
 import 'package:blokus/models/piece.dart';
+import 'package:blokus/services/authentication.dart';
 import 'package:blokus/widgets/board_view.dart';
 import 'package:blokus/widgets/game_over_dialog.dart';
 import 'package:blokus/widgets/lobby_dialog.dart';
 import 'package:blokus/widgets/piece_collection_view.dart';
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
+import 'dart:html' as html;
 
 class GameBoardPage extends StatefulWidget {
-  const GameBoardPage({super.key, required this.supabase, required this.debug});
+  const GameBoardPage({
+    super.key,
+    required this.playerAuthentication,
+    this.debug,
+  });
 
-  final SupabaseClient supabase;
-  final bool debug;
+  final bool? debug;
+  final PlayerAuthentication playerAuthentication;
 
   @override
   State<GameBoardPage> createState() => GameBoardPageState();
@@ -21,16 +26,19 @@ class GameBoardPage extends StatefulWidget {
 
 class GameBoardPageState extends State<GameBoardPage> {
   late final BlokusGame _game;
+  bool debug = false;
 
   @override
   void initState() {
     super.initState();
+    debug = widget.debug ?? false;
     _initialize();
   }
 
   Future<void> _initialize() async {
     _game = BlokusGame(
-      supabase: widget.supabase,
+      context: context,
+      supabase: widget.playerAuthentication.supabase,
       onGameOverCallback: () async {
         await showDialog(
           barrierDismissible: false,
@@ -43,18 +51,20 @@ class GameBoardPageState extends State<GameBoardPage> {
           }),
         );
       },
+      playerEmail: widget.playerAuthentication.playerEmail,
+      playerUID: widget.playerAuthentication.playerUID,
     );
 
     // await for a frame so that the widget mounts
     await Future.delayed(Duration.zero);
 
-    if (!widget.debug) {
+    if (!debug) {
       if (mounted) {
         _openLobbyDialog();
       }
     } else {
       _game.debug = true;
-      _game.startNewGame(_game.participants);
+      _game.startNewGame('Room 1', _game.participants);
     }
   }
 
@@ -65,8 +75,9 @@ class GameBoardPageState extends State<GameBoardPage> {
         builder: (context) {
           return LobbyDialog(
             player: _game.player,
-            supabase: widget.supabase,
+            supabase: widget.playerAuthentication.supabase,
             onGameStarted: _game.onGameStarted,
+            signOutCallback: widget.playerAuthentication.signOut,
           );
         });
   }
@@ -76,6 +87,14 @@ class GameBoardPageState extends State<GameBoardPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Blokus'),
+        actions: [
+          IconButton(
+              tooltip: 'SIGN OUT',
+              onPressed: widget.playerAuthentication.signOut,
+              icon: const Icon(
+                Icons.logout_outlined,
+              ))
+        ],
       ),
       body: ChangeNotifierProvider<BlokusGame>.value(
         value: _game,

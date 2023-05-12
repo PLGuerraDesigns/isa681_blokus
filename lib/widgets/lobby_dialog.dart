@@ -12,12 +12,14 @@ class LobbyDialog extends StatefulWidget {
     required this.onGameStarted,
     required this.supabase,
     required this.player,
+    required this.signOutCallback,
   });
 
   final SupabaseClient supabase;
   final void Function(String gameId, List<Player> allParticipants)
       onGameStarted;
   final Player player;
+  final Function signOutCallback;
 
   @override
   State<LobbyDialog> createState() => LobbyDialogState();
@@ -80,7 +82,7 @@ class LobbyDialogState extends State<LobbyDialog> {
             child: PlayerAvatar(
               transparentBackground: false,
               player: widget.player,
-              allowEdit: true,
+              signOutCallback: () => widget.signOutCallback(),
             ),
           ),
         ],

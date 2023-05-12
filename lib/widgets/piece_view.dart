@@ -13,7 +13,7 @@ class PieceView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Tooltip(
-      message: piece.shape.name,
+      message: debug != true ? '' : piece.shape.name,
       waitDuration: const Duration(milliseconds: 500),
       child: FittedBox(
         fit: BoxFit.scaleDown,
