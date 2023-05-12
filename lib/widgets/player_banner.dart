@@ -68,14 +68,6 @@ class PlayerBanner extends StatelessWidget {
               color: player.primaryColor.darken(0.6),
               fontWeight: FontWeight.bold),
         ),
-        subtitle: Text(
-          'Pieces Remaining: ${player.pieces.length}',
-          style: TextStyle(
-              fontSize: 14,
-              color: player.primaryColor.darken(0.6),
-              fontWeight: FontWeight.bold),
->>>>>>> dev-cst
-        ),
       ),
     );
   }
