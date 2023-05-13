@@ -44,19 +44,11 @@ class _BoardCellViewState extends State<BoardCellView> {
         );
       },
       onWillAccept: (data) {
-<<<<<<< HEAD
-        if (widget.cell.isOccupied()) {
-          setState(() {
-            if (data.runtimeType == PieceView) {
-              widget.cell.color =
-                  (data as PieceView).piece.color.withOpacity(0.25);
-=======
         if (!widget.cell.isOccupied()) {
           setState(() {
             if (data.runtimeType == PieceView) {
               widget.cell.color =
                   (data as PieceView).piece.color.withOpacity(0.3);
->>>>>>> dev-plg
             }
           });
         }
@@ -64,24 +56,16 @@ class _BoardCellViewState extends State<BoardCellView> {
       },
       onLeave: (data) {
         setState(() {
-<<<<<<< HEAD
-          if (widget.cell.isOccupied()) {
-=======
           if (!widget.cell.isOccupied()) {
->>>>>>> dev-plg
             widget.cell.color = Colors.grey[300]!;
           }
         });
       },
       onAccept: (PieceView data) {
         setState(() {
-<<<<<<< HEAD
-          widget.cell.color = Colors.grey[300]!;
-=======
           if (!widget.cell.isOccupied()) {
             widget.cell.color = Colors.grey[300]!;
           }
->>>>>>> dev-plg
         });
         widget.addPieceToBoardCallback(data.piece);
       },

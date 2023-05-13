@@ -1,9 +1,6 @@
-<<<<<<< HEAD
-=======
 import 'dart:convert';
 
 import 'package:blokus/constants/custom_enums.dart';
->>>>>>> dev-plg
 import 'package:blokus/models/piece.dart';
 import 'package:flutter/material.dart';
 import 'package:username_gen/username_gen.dart';
@@ -12,38 +9,12 @@ import 'package:uuid/uuid.dart';
 class Player {
   late final String uid;
 
-<<<<<<< HEAD
-=======
   late final String roomID;
 
->>>>>>> dev-plg
   late final String username;
 
   late final bool isOpponent;
 
-<<<<<<< HEAD
-  late List<Color> colors;
-
-  List<Piece> _pieces = [];
-
-  get pieces => _pieces;
-
-  Player(
-      {required this.isOpponent,
-      String? uid,
-      String? username,
-      List<Color>? colors}) {
-    this.uid = uid ?? const Uuid().v4();
-    this.username = username ?? UsernameGen().generate();
-    this.colors = colors ?? [Colors.grey];
-  }
-
-  void setPieces(List<Piece> pieces) {
-    _pieces = pieces;
-  }
-
-  void removePlayerPiece(Piece piece) {
-=======
   late Color primaryColor;
 
   late Color secondaryColor;
@@ -165,7 +136,6 @@ class Player {
 
   void removePlayerPiece(Piece piece) {
     _lastPiecePlayed = piece;
->>>>>>> dev-plg
     _pieces.remove(piece);
   }
 
@@ -177,11 +147,6 @@ class Player {
     return {
       'uid': uid,
       'username': username,
-<<<<<<< HEAD
-      'colors': colors.map((color) => color.value.toString()).toList(),
-    };
-  }
-=======
       'primaryColorValue': primaryColor.value.toString(),
       'secondaryColorValue': secondaryColor.value.toString(),
       'lastPiecePlayed':
@@ -195,5 +160,4 @@ class Player {
   String toString() {
     return json.encode(data());
   }
->>>>>>> dev-plg
 }
