@@ -7,7 +7,8 @@
         {
             "name": "isa681_blokus",
             "request": "launch",
-            "type": "dart"
+            "type": "dart",
+            "args": ["-d", "chrome","--web-port", "8000"],
         },
         {
             "name": "isa681_blokus (profile mode)",

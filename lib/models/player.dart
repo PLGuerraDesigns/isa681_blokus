@@ -33,7 +33,9 @@ class Player {
 
   bool get hasSecondaryCollection => secondaryColor.value != Colors.grey.value;
 
-  late DateTime lastActiveDateTime;
+  late DateTime _lastActiveDateTime;
+
+  String get lastActiveDateTime => _lastActiveDateTime.toIso8601String();
 
   Player({
     required this.isOpponent,
@@ -43,7 +45,7 @@ class Player {
     Color? primaryColor,
     Color? secondaryColor,
   }) {
-    lastActiveDateTime = DateTime.now();
+    _lastActiveDateTime = DateTime.now();
     this.roomID = roomID ?? '';
     this.uid = uid ?? const Uuid().v4();
     this.primaryColor = primaryColor ?? Colors.grey;
@@ -51,12 +53,25 @@ class Player {
     username = emailAddress ?? UsernameGen().generate().toUpperCase();
   }
 
+  resetPlayerData() {
+    roomID = '';
+    finalScore = 0;
+    leftTheGame = false;
+    _pieces = [];
+    _lastPiecePlayed = null;
+  }
+
+  updateLastActivity(String dateTimeString) {
+    _lastActiveDateTime = DateTime.parse(dateTimeString);
+  }
+
   void calculateFinalScore() {
     List<List<int>> indexRep = [];
 
     if (pieces.isEmpty) {
       finalScore = 15;
-      if (_lastPiecePlayed!.shape == PieceShape.i1) {
+      if (_lastPiecePlayed != null &&
+          _lastPiecePlayed!.shape == PieceShape.i1) {
         finalScore += 5;
       }
     }
@@ -77,7 +92,8 @@ class Player {
   void setData(Map<dynamic, dynamic> playerData) {
     primaryColor = Color(int.parse(playerData['primaryColorValue']));
     secondaryColor = Color(int.parse(playerData['secondaryColorValue']));
-    lastActiveDateTime = DateTime.parse(playerData['lastActiveDateTime']);
+    updateLastActivity(playerData['lastActiveDateTime']);
+    leftTheGame = playerData['leftTheGame'];
 
     if (playerData['lastPiecePlayed'] != null) {
       _lastPiecePlayed = Piece(
@@ -152,6 +168,7 @@ class Player {
       'lastPiecePlayed':
           lastPiecePlayed == null ? null : lastPiecePlayed!.data(),
       'remainingPieces': pieces.map((Piece piece) => piece.data()).toList(),
+      'leftTheGame': leftTheGame,
       'lastActiveDateTime': DateTime.now().toIso8601String(),
     };
   }

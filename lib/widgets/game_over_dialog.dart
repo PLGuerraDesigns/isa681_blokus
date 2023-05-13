@@ -1,28 +1,35 @@
+import 'package:blokus/models/piece.dart';
 import 'package:blokus/models/player.dart';
+import 'package:blokus/widgets/game_piece_history_view.dart';
 import 'package:blokus/widgets/player_avatar.dart';
-import 'package:flame/extensions.dart';
 import 'package:flutter/material.dart';
 
 class GameOverDialog extends StatelessWidget {
-  const GameOverDialog({
+  GameOverDialog({
     super.key,
     required this.returnToLobbyCallback,
     required this.participants,
+    required this.allOpponentsLeft,
+    required this.pieceHistory,
   });
 
-  final void Function(BuildContext context) returnToLobbyCallback;
+  final Function returnToLobbyCallback;
   final List<Player> participants;
-  static late final Player playerWon;
+  late final List<Piece> pieceHistory;
+  late bool allOpponentsLeft;
+  late Player playerWon;
 
   @override
   Widget build(BuildContext context) {
-    participants.sort((a, b) => a.finalScore.compareTo(b.finalScore));
-    participants.reverse();
-    playerWon = participants.first;
+    participants.sort((a, b) => b.finalScore.compareTo(a.finalScore));
+    playerWon = participants[0];
 
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       title: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.start,
         children: [
           Text(
             'GAME OVER',
@@ -31,9 +38,11 @@ class GameOverDialog extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           Text(
-            playerWon.isOpponent
-                ? 'Player ${playerWon.username} Won,\nBetter luck next time.'
-                : 'Congratulations, You Won!',
+            allOpponentsLeft
+                ? "All opponents left, ${playerWon.username} won."
+                : playerWon.isOpponent
+                    ? 'Player ${playerWon.username} Won,\nBetter luck next time.'
+                    : 'Congratulations, You Won!',
             style: TextStyle(
               fontWeight: FontWeight.w300,
               fontSize: 20,
@@ -60,12 +69,15 @@ class GameOverDialog extends StatelessWidget {
               height: 20,
               color: Colors.blue,
             ),
-            Container(
-                constraints: BoxConstraints(
-                  minWidth: MediaQuery.of(context).size.width * 0.4,
-                  minHeight: MediaQuery.of(context).size.height * 0.25,
-                ),
-                child: playerScores()),
+            playerScores(),
+            pieceHistory.isEmpty
+                ? Container()
+                : Flexible(
+                    child: GamePieceHistoryView(
+                      pieceHistory: pieceHistory,
+                      players: participants,
+                    ),
+                  )
           ]),
       actionsPadding: const EdgeInsets.all(15),
       actions: [
@@ -73,7 +85,9 @@ class GameOverDialog extends StatelessWidget {
           color: Colors.blue,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
           disabledColor: Colors.blue.withOpacity(0.25),
-          onPressed: () => returnToLobbyCallback(context),
+          onPressed: () {
+            returnToLobbyCallback();
+          },
           child: const Text(
             'RETURN TO LOBBY',
             style: TextStyle(color: Colors.white),

@@ -173,15 +173,15 @@ class Lobby {
   // Start the game if someone has started a game with you
   void gameStartedCallback(BuildContext context, dynamic payload, dynamic ref,
       Function onGameStarted) {
-    final participants = List<dynamic>.from(payload['participants']);
+    String roomID = payload['room_id'];
+    final participantsPayload = List<dynamic>.from(payload['participants']);
 
     // Ensure we belong to the started room
-    if (participants
+    if (participantsPayload
         .map((participant) => participant['uid'])
         .contains(player.uid)) {
-      var playerData = participants
-          .where((participant) => participant['uid'] == player.uid)
-          .first;
+      var playerData = participantsPayload
+          .firstWhere((participant) => participant['uid'] == player.uid);
 
       // Update player colors
       player.primaryColor = Color(int.parse(playerData['primaryColorValue']));
@@ -189,21 +189,18 @@ class Lobby {
           Color(int.parse(playerData['secondaryColorValue']));
 
       List<Player> opponents = rooms
-          .where((room) => room.id == selectedRoomID)
-          .first
+          .firstWhere((room) => room.id == payload['room_id'])
           .players
-          .where((element) => element.uid != player.uid)
+          .where((joiningPlayers) => joiningPlayers.uid != player.uid)
           .toList();
 
       for (Player opponent in opponents) {
-        var opponentData = participants
-            .where((participant) => participant['uid'] == opponent.uid)
-            .first;
+        var opponentData = participantsPayload
+            .firstWhere((participant) => participant['uid'] == opponent.uid);
 
         opponent.setData(opponentData);
       }
 
-      final roomID = payload['room_id'] as String;
       onGameStarted(roomID, opponents);
       Navigator.of(context).pop();
     }
