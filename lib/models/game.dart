@@ -96,8 +96,10 @@ class BlokusGame extends FlameGame with ChangeNotifier {
     _colorTurnValue = playerTurnValidation.colorValueUpNext(participants,
         _piecesPlayedHistory.isEmpty ? null : _piecesPlayedHistory.last);
 
-    participants = playerTurnValidation.checkPlayerTimeOutForfeit(
-        players: participants, timeOutInMinutes: timeOutInMinutes);
+    playerTurnValidation.checkPlayerTimeOutForfeit(
+        opponents: opponents,
+        timeOutInMinutes: timeOutInMinutes,
+        endGameCallback: () => _endGame());
 
     _broadcastPlayerData();
     _broadcastCheckInData();
@@ -186,6 +188,7 @@ class BlokusGame extends FlameGame with ChangeNotifier {
   }
 
   void _broadcastCheckInData() async {
+    player.updateLastActivity(DateTime.now().toIso8601String());
     await realtimeChannel.send(
       type: RealtimeListenTypes.broadcast,
       event: 'check_in',
@@ -273,6 +276,7 @@ class BlokusGame extends FlameGame with ChangeNotifier {
             : json.encode(_player.lastPiecePlayed!.data()),
       },
     );
+    notifyListeners();
   }
 
   /// Called when either the player or the opponent has run out of pieces.

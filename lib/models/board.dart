@@ -154,7 +154,7 @@ class Board {
         return true;
       }
       return false;
-    } on RangeError {
+    } catch (_) {
       return false;
     }
   }

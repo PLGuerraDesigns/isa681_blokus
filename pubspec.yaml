@@ -4,7 +4,7 @@ description: Multiplayer Blokus game using Flutter, Flame and Supabase.
 publish_to: "none"
 
 # ! UPDATE VERSION NUMBER
-version: 0.5.2+13
+version: 0.5.3+14
 
 environment:
   sdk: ">=2.19.0 <3.0.0"
