@@ -10,10 +10,6 @@ class Cell {
   }
 
   bool isOccupied() {
-<<<<<<< HEAD
-    return occupiedPlayerID.isEmpty;
-=======
     return occupiedPlayerID.isNotEmpty;
->>>>>>> dev-plg
   }
 }
