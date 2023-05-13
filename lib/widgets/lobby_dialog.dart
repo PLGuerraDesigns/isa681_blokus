@@ -13,6 +13,7 @@ class LobbyDialog extends StatefulWidget {
     required this.supabase,
     required this.player,
     required this.signOutCallback,
+    required this.timerResetCallback,
   });
 
   final SupabaseClient supabase;
@@ -20,6 +21,7 @@ class LobbyDialog extends StatefulWidget {
       onGameStarted;
   final Player player;
   final Function signOutCallback;
+  final Function timerResetCallback;
 
   @override
   State<LobbyDialog> createState() => LobbyDialogState();
@@ -68,66 +70,74 @@ class LobbyDialogState extends State<LobbyDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: Stack(
-        alignment: Alignment.center,
-        children: [
-          Text(
-            'LOBBY',
-            style: TextStyle(
-                fontFamily: 'LemonMilk', fontSize: 60, color: Colors.red[700]),
-            textAlign: TextAlign.center,
-          ),
-          Align(
-            alignment: Alignment.centerRight,
-            child: PlayerAvatar(
-              transparentBackground: false,
-              player: widget.player,
-              signOutCallback: () => widget.signOutCallback(),
-            ),
-          ),
-        ],
-      ),
-      content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+      title: MouseRegion(
+        onHover: (_) => widget.timerResetCallback(),
+        child: Stack(
+          alignment: Alignment.center,
           children: [
-            Row(
-              children: [
-                Text(
-                  'ROOMS',
-                  style: TextStyle(
-                    fontFamily: 'LemonMilk',
-                    fontWeight: FontWeight.w300,
-                    fontSize: 32,
-                    color: Colors.blue[600],
+            Text(
+              'LOBBY',
+              style: TextStyle(
+                  fontFamily: 'LemonMilk',
+                  fontSize: 60,
+                  color: Colors.red[700]),
+              textAlign: TextAlign.center,
+            ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: PlayerAvatar(
+                transparentBackground: false,
+                player: widget.player,
+                signOutCallback: () => widget.signOutCallback(),
+              ),
+            ),
+          ],
+        ),
+      ),
+      content: MouseRegion(
+        onHover: (_) => widget.timerResetCallback(),
+        child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    'ROOMS',
+                    style: TextStyle(
+                      fontFamily: 'LemonMilk',
+                      fontWeight: FontWeight.w300,
+                      fontSize: 32,
+                      color: Colors.blue[600],
+                    ),
                   ),
-                ),
-                const Spacer(),
-                CustomButton(
-                  title: 'NEW ROOM',
-                  iconData: Icons.add,
-                  backgroundColor: Colors.green,
-                  onPressedCallback: _lobby.rooms
-                              .map((room) => room.id)
-                              .contains(_lobby.createdRoomID) ||
-                          _lobby.selectedRoomID.isNotEmpty
-                      ? null
-                      : _lobby.createRoomCallback,
-                ),
-              ],
-            ),
-            const Divider(
-              height: 20,
-              color: Colors.blue,
-            ),
-            RoomListView(
-              rooms: _lobby.rooms,
-              selectedRoomID: _lobby.selectedRoomID,
-              loading: _lobby.loading,
-              leaveRoomCallback: _lobby.leaveRoomCallback,
-              joinRoomCallback: (roomID) => _lobby.joinRoomCallback(roomID),
-            ),
-          ]),
+                  const Spacer(),
+                  CustomButton(
+                    title: 'NEW ROOM',
+                    iconData: Icons.add,
+                    backgroundColor: Colors.green,
+                    onPressedCallback: _lobby.rooms
+                                .map((room) => room.id)
+                                .contains(_lobby.createdRoomID) ||
+                            _lobby.selectedRoomID.isNotEmpty
+                        ? null
+                        : _lobby.createRoomCallback,
+                  ),
+                ],
+              ),
+              const Divider(
+                height: 20,
+                color: Colors.blue,
+              ),
+              RoomListView(
+                rooms: _lobby.rooms,
+                selectedRoomID: _lobby.selectedRoomID,
+                loading: _lobby.loading,
+                leaveRoomCallback: _lobby.leaveRoomCallback,
+                joinRoomCallback: (roomID) => _lobby.joinRoomCallback(roomID),
+              ),
+            ]),
+      ),
       actionsPadding: const EdgeInsets.all(15),
       actions: [
         MaterialButton(

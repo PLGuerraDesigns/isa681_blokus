@@ -9,43 +9,10 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
-import 'dart:html' as html;
-
-/// Subscription on application termination warning
-StreamSubscription? _onBeforeUnloadSubscription;
-
-StreamSubscription? registerOnBeforeUnload(String warningMessage) {
-  StreamSubscription<html.BeforeUnloadEvent> _onBeforeUnloadSubscription;
-
-  _onBeforeUnloadSubscription = html.window.onBeforeUnload.listen((e) async {
-    (e as html.BeforeUnloadEvent).returnValue = warningMessage;
-    return Future.value(warningMessage);
-  }) as StreamSubscription<html.BeforeUnloadEvent>;
-  return _onBeforeUnloadSubscription;
-}
-
-void stopBeforeUnloadHandler() {
-  if (_onBeforeUnloadSubscription != null) {
-    _onBeforeUnloadSubscription!.cancel();
-    _onBeforeUnloadSubscription = null;
-  }
-}
 
 void main() async {
-//disable warning for closing browser tab:
-  stopBeforeUnloadHandler();
-
-//enable warning for closing browser tab:
-  _onBeforeUnloadSubscription =
-      registerOnBeforeUnload("You will be forfeited from any active games.");
-
   usePathUrlStrategy();
-  // Function userLeftCallback =
-  html.window.onBeforeUnload.listen((event) {
-    if (event is html.BeforeUnloadEvent) {
-      event.returnValue = 'Player Left';
-    }
-  });
+
   await Supabase.initialize(
     url: 'https://igtfbjzlpverlfzsavno.supabase.co',
     anonKey:

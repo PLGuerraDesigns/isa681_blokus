@@ -4,10 +4,9 @@ import 'package:blokus/constants/custom_enums.dart';
 import 'package:blokus/models/board.dart';
 import 'package:blokus/models/piece.dart';
 import 'package:blokus/models/player.dart';
-import 'package:blokus/widgets/custom_snackbar.dart';
+import 'package:blokus/services/player_turn_validation.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class BlokusGame extends FlameGame with ChangeNotifier {
@@ -16,6 +15,8 @@ class BlokusGame extends FlameGame with ChangeNotifier {
   final String playerEmail;
 
   final SupabaseClient supabase;
+
+  final PlayerTurnValidation playerTurnValidation = PlayerTurnValidation();
 
   /// Callback to notify the parent when the game ends.
   final void Function() onGameOverCallback;
@@ -31,22 +32,25 @@ class BlokusGame extends FlameGame with ChangeNotifier {
 
   int _colorTurnValue = Colors.blue.value;
 
-  Piece? _lastPiecePlayed;
+  List<Piece> _piecesPlayedHistory = [];
 
   int get colorTurnValue => _colorTurnValue;
 
   List<Player> participants = [];
 
-  bool debug = false;
-
   Player get player => _player;
 
   BuildContext context;
 
-  List<Player> get opponents =>
-      participants.where((participant) => participant != player).toList();
+  List<Player> get opponents => participants
+      .where((participant) => participant.uid != player.uid)
+      .toList();
 
   Board get board => _board;
+
+  List<Piece> get gamePieceHistory => _piecesPlayedHistory;
+
+  final int timeOutInMinutes = 10;
 
   BlokusGame({
     required this.onGameOverCallback,
@@ -89,104 +93,112 @@ class BlokusGame extends FlameGame with ChangeNotifier {
       return;
     }
 
-    _checkPlayerTurn();
-    _checkPlayerForfeit();
-    _sendPlayerMove();
+    _colorTurnValue = playerTurnValidation.colorValueUpNext(participants,
+        _piecesPlayedHistory.isEmpty ? null : _piecesPlayedHistory.last);
 
-    if (participants.where((player) => player.pieces.isEmpty).isNotEmpty) {
+    participants = playerTurnValidation.checkPlayerTimeOutForfeit(
+        players: participants, timeOutInMinutes: timeOutInMinutes);
+
+    _broadcastPlayerData();
+    _broadcastCheckInData();
+
+    if (opponents.where((player) => player.leftTheGame).isNotEmpty) {
+      _endGame();
+    }
+
+    if (participants.where((player) => player.pieces.isEmpty).isNotEmpty &&
+        isGameOver) {
       _endGame();
     }
   }
 
-  void onGameStarted(roomID, allParticipants) async {
+  void onGameStarted(roomID, opponents) async {
     // await a frame to allow subscribing to a new channel in a realtime callback
     await Future.delayed(const Duration(milliseconds: 20));
 
-    startNewGame(roomID, allParticipants);
+    startNewGame(roomID, opponents);
   }
 
-  void startNewGame(String roomID, List<Player> allParticipants) async {
-    participants = allParticipants;
+  void resetGameState() {
+    _colorTurnValue = Colors.blue.value;
+    _piecesPlayedHistory = [];
+    _board.resetBoard();
 
+    participants = [player, Player(isOpponent: true)];
+    for (Player player in participants) {
+      player.initializePieces();
+    }
+    isGameOver = false;
+  }
+
+  void startNewGame(String roomID, List<Player> opponents) async {
+    participants = opponents;
+    participants.add(player);
     realtimeChannel =
         supabase.channel(roomID, opts: const RealtimeChannelConfig(self: true));
 
     realtimeChannel
         .on(RealtimeListenTypes.broadcast, ChannelFilter(event: 'game_state'),
             (payload, [_]) {
-      _board.setUpBoard(payload['boardConfiguration']);
-      updateOpponent(payload['playerData']);
-      updateLastPiecePlayed(payload['lastPiecePlayed']);
+      if (payload != null) {
+        unpackGameData(payload);
+      }
+    }).on(RealtimeListenTypes.broadcast, ChannelFilter(event: 'check_in'),
+            (payload, [_]) {
+      if (payload != null) {
+        opponentCheckIn(payload);
+      }
     }).subscribe();
 
     _board.resetBoard();
-    _player.initializePieces();
-    for (Player opponent in opponents) {
-      opponent.initializePieces();
+    for (Player player in participants) {
+      player.initializePieces();
     }
     isGameOver = false;
     await Future.delayed(const Duration(milliseconds: 200));
     notifyListeners();
   }
 
-  void _checkPlayerTurn() {
-    List<Color> colorTurnOrder = [
-      Colors.blue,
-      Colors.amber[600]!,
-      Colors.red,
-      Colors.green,
-    ];
-    int colorTurnOrderIndex = 0;
-    bool skipUser = false;
-
-    participants.sort((a, b) => colorTurnOrder
-        .indexOf(a.primaryColor)
-        .compareTo(colorTurnOrder.indexOf(b.primaryColor)));
-
-    if (_lastPiecePlayed != null) {
-      colorTurnOrderIndex = colorTurnOrder.indexWhere(
-        (color) => color.value == _lastPiecePlayed!.color.value,
-      );
-
-      do {
-        skipUser = false;
-        colorTurnOrderIndex = (colorTurnOrderIndex + 1) % 4;
-
-        for (Player player in participants) {
-          if ((player.primaryColor.value ==
-                      colorTurnOrder[colorTurnOrderIndex].value ||
-                  player.primaryColor.value ==
-                      colorTurnOrder[colorTurnOrderIndex].value) &&
-              player.leftTheGame) {
-            skipUser = true;
-          }
-        }
-      } while (skipUser);
-
-      _colorTurnValue = colorTurnOrder[colorTurnOrderIndex].value;
+  void opponentCheckIn(dynamic checkInPayload) {
+    if (opponents
+        .map((opponent) => opponent.uid)
+        .contains(checkInPayload['playerUID'])) {
+      Player opponent = opponents
+          .where((opponent) => opponent.uid == checkInPayload['playerUID'])
+          .first;
+      opponent.updateLastActivity(checkInPayload['lastActiveDateTime']);
     }
   }
 
-  void _checkPlayerForfeit() {
-    DateTime currentDateTime = DateTime.now();
-    int minutesElapsed = 0;
-    for (Player player in opponents) {
-      minutesElapsed =
-          currentDateTime.difference(player.lastActiveDateTime).inMinutes;
-      if (minutesElapsed > 4) {
-        player.leftTheGame = true;
-        notifyListeners();
-      }
+  void unpackGameData(dynamic gameData) {
+    if (gameData['lastPiecePlayed'] == null) {
+      return;
     }
-    if (participants.where((player) => !player.leftTheGame).isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(CustomSnackbar()
-          .floatingMessage(
-              context, 'All players have left the game.', Colors.orange[700]!));
-      _endGame();
+    Map<dynamic, dynamic> piecePlayedData =
+        jsonDecode(gameData['lastPiecePlayed']);
+
+    if (int.parse(piecePlayedData['colorValue']) == colorTurnValue) {
+      _board.setUpBoard(gameData['boardConfiguration']);
+      updateOpponent(gameData['playerData']);
+      updateLastPiecePlayed(gameData['lastPiecePlayed']);
+      notifyListeners();
     }
   }
 
-  void _sendPlayerMove() async {
+  void _broadcastCheckInData() async {
+    await realtimeChannel.send(
+      type: RealtimeListenTypes.broadcast,
+      event: 'check_in',
+      payload: {
+        'playerUID': player.uid,
+        'lastActiveDateTime': player.lastActiveDateTime,
+      },
+    );
+    await Future.delayed(const Duration(milliseconds: 250));
+    notifyListeners();
+  }
+
+  void _broadcastPlayerData() async {
     await realtimeChannel.send(
       type: RealtimeListenTypes.broadcast,
       event: 'game_state',
@@ -199,31 +211,32 @@ class BlokusGame extends FlameGame with ChangeNotifier {
       },
     );
     await Future.delayed(Duration.zero);
-    notifyListeners();
-  }
-
-  void returnToLobbyCallback(BuildContext context) async {
-    context.go('/');
-    await supabase.removeChannel(realtimeChannel);
   }
 
   void updateLastPiecePlayed(String? lastPiecePlayedPayload) {
     if (lastPiecePlayedPayload != null) {
       dynamic pieceData = jsonDecode(lastPiecePlayedPayload);
-      if (colorTurnValue == int.parse(pieceData['colorValue'])) {
-        _lastPiecePlayed = Piece(
-          playerUID: pieceData['playerUID'],
-          color: Color(int.parse(pieceData['colorValue'])),
-          shape: PieceShape.values
-              .where((piece) => piece.name == pieceData['shape'])
-              .first,
-          isSecondarySet: pieceData['isSecondarySet'],
+      var pieceColor = Color(int.parse(pieceData['colorValue']));
+      var playerUID = pieceData['playerUID'];
+
+      if (_piecesPlayedHistory.isEmpty ||
+          (_piecesPlayedHistory.last.color != pieceColor &&
+              _piecesPlayedHistory.last.playerUID != playerUID)) {
+        _piecesPlayedHistory.add(
+          Piece(
+            playerUID: pieceData['playerUID'],
+            color: pieceColor,
+            shape: PieceShape.values
+                .where((piece) => piece.name == pieceData['shape'])
+                .first,
+            isSecondarySet: pieceData['isSecondarySet'],
+          ),
         );
       }
     }
   }
 
-  void updateOpponent(String opponentPayload) {
+  void updateOpponent(dynamic opponentPayload) {
     Map<dynamic, dynamic> playerData = jsonDecode(opponentPayload);
     if (opponents.map((opponent) => opponent.uid).contains(playerData['uid'])) {
       Player opponent = opponents
@@ -241,8 +254,25 @@ class BlokusGame extends FlameGame with ChangeNotifier {
     )) {
       _board.addPiece(targetCellID: id, piece: piece);
       _player.removePlayerPiece(piece);
-      _lastPiecePlayed = piece;
+      _piecesPlayedHistory.add(piece);
     }
+
+    notifyListeners();
+  }
+
+  void forfeitPlayer() async {
+    player.leftTheGame = true;
+    await realtimeChannel.send(
+      type: RealtimeListenTypes.broadcast,
+      event: 'game_state',
+      payload: {
+        'boardConfiguration': _board.configuration,
+        'playerData': json.encode(_player.data()),
+        'lastPiecePlayed': _player.lastPiecePlayed == null
+            ? null
+            : json.encode(_player.lastPiecePlayed!.data()),
+      },
+    );
   }
 
   /// Called when either the player or the opponent has run out of pieces.
@@ -250,8 +280,8 @@ class BlokusGame extends FlameGame with ChangeNotifier {
     isGameOver = true;
     for (Player player in participants) {
       player.calculateFinalScore();
-      print(player.finalScore);
     }
+    supabase.removeChannel(realtimeChannel);
     onGameOverCallback();
   }
 }
