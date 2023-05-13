@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:blokus/constants/custom_enums.dart';
 import 'package:flutter/material.dart';
 
@@ -7,6 +5,14 @@ class Piece {
   final Color color;
   final PieceShape shape;
   final String playerUID;
+<<<<<<< HEAD
+
+  Piece({required this.color, required this.shape, required this.playerUID});
+
+  @override
+  String toString() {
+    return "($shape, ${color.value}, $playerUID)";
+=======
   late final bool? isSecondarySet;
   late int quarterTurns;
 
@@ -34,5 +40,6 @@ class Piece {
   @override
   String toString() {
     return json.encode(data());
+>>>>>>> dev-plg
   }
 }
