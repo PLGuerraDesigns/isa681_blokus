@@ -46,7 +46,12 @@ class GameBoardPageState extends State<GameBoardPage> {
           context: context,
           builder: ((context) {
             return GameOverDialog(
-              returnToLobbyCallback: widget.playerAuthentication.signOut,
+              returnToLobbyCallback: () {
+                if (context.mounted) {
+                  Navigator.of(context).pop();
+                  widget.playerAuthentication.signOut();
+                }
+              },
               participants: _game.participants,
               pieceHistory: _game.gamePieceHistory,
               allOpponentsLeft: _game.opponents
@@ -89,7 +94,12 @@ class GameBoardPageState extends State<GameBoardPage> {
               player: _game.player,
               supabase: widget.playerAuthentication.supabase,
               onGameStarted: _game.onGameStarted,
-              signOutCallback: widget.playerAuthentication.signOut,
+              signOutCallback: () {
+                if (!_game.isGameOver) {
+                  _game.forfeitPlayer();
+                }
+                widget.playerAuthentication.signOut();
+              },
               timerResetCallback: () => autoLogout.resetTimer());
         });
   }
@@ -106,7 +116,10 @@ class GameBoardPageState extends State<GameBoardPage> {
           actions: [
             IconButton(
                 tooltip: 'SIGN OUT',
-                onPressed: widget.playerAuthentication.signOut,
+                onPressed: () {
+                  _game.forfeitPlayer();
+                  widget.playerAuthentication.signOut();
+                },
                 icon: const Icon(
                   Icons.logout_outlined,
                 ))
