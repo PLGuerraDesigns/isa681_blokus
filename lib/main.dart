@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:blokus/pages/game_board_page.dart';
 import 'package:blokus/pages/login_page.dart';
 import 'package:blokus/pages/splashscreen.dart';
