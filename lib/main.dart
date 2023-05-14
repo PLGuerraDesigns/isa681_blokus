@@ -74,7 +74,7 @@ class MyApp extends StatelessWidget {
 
       if (signedIn) return '/home';
 
-      return null;
+      return '/';
     },
     refreshListenable: playerAuthentication,
     errorBuilder: (context, state) =>

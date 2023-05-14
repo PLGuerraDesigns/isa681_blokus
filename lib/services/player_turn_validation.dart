@@ -44,20 +44,29 @@ class PlayerTurnValidation {
     return _colorTurnOrder[colorTurnOrderIndex].value;
   }
 
-  List<Player> checkPlayerTimeOutForfeit({
-    required List<Player> players,
+  void checkPlayerTimeOutForfeit({
+    required List<Player> opponents,
     required int timeOutInMinutes,
+    required Function endGameCallback,
   }) {
     DateTime currentDateTime = DateTime.now();
     int minutesElapsed = 0;
-    for (Player player in players) {
+    if (opponents.isEmpty) {
+      endGameCallback();
+    }
+    for (Player player in opponents) {
+      if (player.leftTheGame) {
+        endGameCallback();
+      }
       minutesElapsed = currentDateTime
           .difference(DateTime.parse(player.lastActiveDateTime))
           .inMinutes;
       if (minutesElapsed > timeOutInMinutes + 1) {
         player.leftTheGame = true;
+        endGameCallback();
+      } else {
+        player.leftTheGame = false;
       }
     }
-    return players;
   }
 }

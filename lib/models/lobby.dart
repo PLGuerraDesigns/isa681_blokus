@@ -202,7 +202,9 @@ class Lobby {
       }
 
       onGameStarted(roomID, opponents);
-      Navigator.of(context).pop();
+      if (context.mounted) {
+        Navigator.of(context).pop();
+      }
     }
   }
 
