@@ -4,6 +4,9 @@
 
 A real-time Blokus game built with [Flutter](https://flutter.dev/), [Flame](https://flame-engine.org/) and [Supabase](https://supabase.com).
 
+Play the Game:
+https://plguerradesigns.github.io/isa681_blokus/
+
 ## This project has several known issues and is not a finished product.
 
 It is a proof of concept for a real-time multiplayer game using Supabase as the backend and Flame as the game engine.
