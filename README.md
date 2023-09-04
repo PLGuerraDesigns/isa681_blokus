@@ -36,9 +36,7 @@ http://www.gottfriedville.net/blokus/
 
 ![Game Play](https://github.com/PLGuerraDesigns/isa681_blokus/blob/main/product_showcase/game_play.gif)
 
-![Game Over](https://github.com/PLGuerraDesigns/isa681_blokus/blob/main/product_showcase/game_over.png)
-
-![Play Piece History](https://github.com/PLGuerraDesigns/isa681_blokus/blob/main/product_showcase/play_piece.gif)
+![Game Over & Piece History](https://github.com/PLGuerraDesigns/isa681_blokus/blob/main/product_showcase/game_over.gif)
 
 ## Getting Started:
 
